@@ -1,0 +1,3764 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b1622">
+<meta name="description" content="Compagno di viaggio per 15 giorni in van in Norvegia, 1-15 agosto 2026. Funziona offline.">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Norge Quest — Norvegia in van</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><rect width='16' height='16' fill='%230b1622'/><rect x='2' y='6' width='12' height='5' fill='%23f5c542'/><rect x='3' y='11' width='2' height='2' fill='%23dbe9f7'/><rect x='11' y='11' width='2' height='2' fill='%23dbe9f7'/></svg>">
+<style>
+/* ============================================================
+   NORGE QUEST — STYLE
+   Pixel / Game Boy Color. Niente raggi, niente gradienti morbidi,
+   bordi netti costruiti con box-shadow a gradini.
+   ============================================================ */
+
+:root{
+  --bg:#0b1622;
+  --bg2:#0f1e2e;
+  --panel:#16283d;
+  --panel2:#1d3550;
+  --panel-lo:#122335;
+  --panel-hi:#22405f;
+  --line:#2e5580;
+  --line-hi:#4a80bd;
+  --ink:#dbe9f7;
+  --ink-dim:#7d97b3;
+  --ink-faint:#546b83;
+  --green:#7fdb6a;
+  --green-d:#3f8f38;
+  --gold:#f5c542;
+  --gold-d:#a8801a;
+  --red:#e8544b;
+  --red-d:#96261f;
+  --blue:#4a9de8;
+  --purple:#a367d6;
+  --px:4px;
+  --font:"Lucida Console","DejaVu Sans Mono",Consolas,"Courier New",monospace;
+}
+
+*{ box-sizing:border-box; }
+
+html,body{
+  margin:0; padding:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--font);
+  font-size:14px;
+  line-height:1.55;
+  -webkit-text-size-adjust:100%;
+  overflow-x:hidden;
+}
+
+body{
+  padding-bottom:76px;             /* spazio per la tab bar */
+  background-image:
+    repeating-linear-gradient(0deg, rgba(255,255,255,.014) 0 1px, transparent 1px 3px);
+}
+
+img,canvas{ image-rendering:pixelated; image-rendering:crisp-edges; max-width:100%; }
+
+button,input,textarea,select{ font-family:inherit; font-size:inherit; color:inherit; }
+
+::selection{ background:var(--gold); color:#111; }
+
+/* ---------- scaffolding pixel ---------- */
+
+.pxbox{
+  background:var(--panel);
+  border:0;
+  box-shadow:
+    0 0 0 var(--px) var(--line),
+    inset 0 var(--px) 0 rgba(255,255,255,.07),
+    inset 0 calc(var(--px) * -1) 0 rgba(0,0,0,.35);
+  padding:14px;
+  margin:0 0 14px;
+}
+.pxbox.lo{ background:var(--panel-lo); }
+
+.pxbtn{
+  display:inline-flex; align-items:center; justify-content:center; gap:7px;
+  min-height:44px; padding:9px 15px;
+  background:var(--panel-hi);
+  border:0; cursor:pointer;
+  color:var(--ink);
+  text-transform:uppercase; letter-spacing:.09em; font-size:12px; font-weight:700;
+  box-shadow:
+    0 0 0 3px var(--line-hi),
+    inset 0 3px 0 rgba(255,255,255,.16),
+    inset 0 -3px 0 rgba(0,0,0,.4);
+  transition:transform .06s steps(2), background .12s;
+}
+.pxbtn:hover{ background:#2b5177; }
+.pxbtn:active{ transform:translateY(3px); box-shadow:0 0 0 3px var(--line-hi), inset 0 -2px 0 rgba(0,0,0,.4); }
+.pxbtn.go{ background:var(--green-d); box-shadow:0 0 0 3px var(--green), inset 0 3px 0 rgba(255,255,255,.2), inset 0 -3px 0 rgba(0,0,0,.4); }
+.pxbtn.go:hover{ background:#4aa842; }
+.pxbtn.warn{ background:var(--red-d); box-shadow:0 0 0 3px var(--red), inset 0 3px 0 rgba(255,255,255,.18), inset 0 -3px 0 rgba(0,0,0,.4); }
+.pxbtn.sm{ min-height:34px; padding:5px 10px; font-size:11px; box-shadow:0 0 0 2px var(--line-hi), inset 0 2px 0 rgba(255,255,255,.14); }
+
+input[type=text],input[type=number],input[type=date],textarea,select{
+  width:100%; padding:10px 11px; min-height:44px;
+  background:var(--bg2); color:var(--ink);
+  border:0; outline:0;
+  box-shadow:inset 0 0 0 3px var(--line);
+}
+input:focus,textarea:focus,select:focus{ box-shadow:inset 0 0 0 3px var(--gold); }
+textarea{ resize:vertical; min-height:110px; line-height:1.6; }
+label{ display:block; font-size:11px; text-transform:uppercase; letter-spacing:.1em;
+       color:var(--ink-dim); margin:0 0 5px; }
+
+h1,h2,h3,h4{ margin:0 0 10px; line-height:1.25; font-weight:700; }
+h2{ font-size:17px; letter-spacing:.04em; }
+h3{ font-size:14px; text-transform:uppercase; letter-spacing:.11em; color:var(--gold); }
+h4{ font-size:13px; color:var(--ink); }
+p{ margin:0 0 11px; }
+b,strong{ color:#fff; }
+a{ color:var(--blue); }
+hr{ border:0; height:3px; background:var(--line); margin:16px 0; }
+
+/* ---------- HUD ---------- */
+
+#hud{
+  position:sticky; top:0; z-index:60;
+  background:var(--bg2);
+  box-shadow:0 4px 0 var(--line), 0 5px 0 rgba(0,0,0,.5);
+  padding:8px 12px;
+  display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+}
+#hud .lvl{
+  font-size:11px; letter-spacing:.11em; text-transform:uppercase;
+  color:var(--gold); white-space:nowrap; font-weight:700;
+}
+#hud .xpwrap{ flex:1 1 110px; min-width:80px; }
+#hud .xpbar{
+  height:14px; background:#08111b; box-shadow:inset 0 0 0 3px var(--line);
+  position:relative; overflow:hidden;
+}
+#hud .xpfill{
+  height:100%; width:0;
+  background:repeating-linear-gradient(90deg,var(--green) 0 6px,var(--green-d) 6px 12px);
+  transition:width .6s steps(12);
+}
+#hud .stat{ font-size:11px; color:var(--ink-dim); white-space:nowrap; }
+#hud .stat b{ color:var(--ink); }
+#hud .hbtns{ display:flex; gap:6px; margin-left:auto; }
+.iconbtn{
+  width:38px; height:38px; display:grid; place-items:center;
+  background:var(--panel); border:0; cursor:pointer; font-size:16px;
+  box-shadow:0 0 0 3px var(--line), inset 0 2px 0 rgba(255,255,255,.09);
+}
+.iconbtn.on{ background:var(--green-d); box-shadow:0 0 0 3px var(--green); }
+
+/* ---------- layout ---------- */
+
+.wrap{ max-width:900px; margin:0 auto; padding:14px 12px 20px; }
+.view{ display:none; animation:fadein .22s steps(4); }
+.view.active{ display:block; }
+@keyframes fadein{ from{opacity:0} to{opacity:1} }
+
+/* ---------- tab bar ---------- */
+
+#tabs{
+  position:fixed; left:0; right:0; bottom:0; z-index:70;
+  display:grid; grid-template-columns:repeat(5,1fr);
+  background:var(--bg2);
+  box-shadow:0 -4px 0 var(--line), 0 -5px 0 rgba(0,0,0,.5);
+}
+#tabs button{
+  background:none; border:0; cursor:pointer; padding:7px 2px 8px;
+  display:flex; flex-direction:column; align-items:center; gap:2px;
+  color:var(--ink-faint); font-size:9px; letter-spacing:.05em;
+  text-transform:uppercase; min-height:60px; justify-content:center;
+}
+#tabs button .ti{ font-size:19px; line-height:1; }
+#tabs button.active{ color:var(--gold); background:var(--panel-lo);
+  box-shadow:inset 0 4px 0 var(--gold); }
+
+/* ---------- mappa ---------- */
+
+#mapwrap{
+  position:relative; background:#08131f;
+  box-shadow:0 0 0 var(--px) var(--line);
+  overflow:auto; margin-bottom:14px;
+  max-height:70vh;
+}
+#mapcanvas{ display:block; margin:0 auto; cursor:pointer; touch-action:pan-x pan-y; }
+
+.maplegend{
+  display:flex; gap:12px; flex-wrap:wrap; justify-content:center;
+  font-size:10px; color:var(--ink-dim); margin:-6px 0 14px;
+  text-transform:uppercase; letter-spacing:.07em;
+}
+.maplegend i{ display:inline-block; width:9px; height:9px; margin-right:4px;
+  vertical-align:-1px; font-style:normal; }
+
+/* ---------- countdown ---------- */
+
+.cdown{ text-align:center; padding:22px 14px; }
+.cdown .big{
+  font-size:52px; font-weight:700; color:var(--gold); line-height:1;
+  letter-spacing:.02em;
+  text-shadow:0 4px 0 var(--gold-d), 0 8px 0 rgba(0,0,0,.4);
+}
+.cdown .lab{ font-size:12px; text-transform:uppercase; letter-spacing:.22em;
+  color:var(--ink-dim); margin-top:10px; }
+
+/* ---------- lista giorni ---------- */
+
+.daylist{ display:grid; gap:10px; }
+.daycard{
+  display:flex; gap:12px; align-items:stretch; cursor:pointer;
+  background:var(--panel); padding:11px 12px; text-align:left; border:0; width:100%;
+  box-shadow:0 0 0 3px var(--line), inset 0 3px 0 rgba(255,255,255,.05);
+  transition:transform .07s steps(2);
+}
+.daycard:hover{ transform:translateX(4px); box-shadow:0 0 0 3px var(--line-hi), inset 0 3px 0 rgba(255,255,255,.08); }
+.daycard.today{ box-shadow:0 0 0 3px var(--gold), inset 0 3px 0 rgba(255,255,255,.12); background:#1e2f3f; }
+.daycard.done{ opacity:.62; }
+.daycard .dn{
+  flex:0 0 44px; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  background:var(--bg2); box-shadow:inset 0 0 0 3px var(--line);
+}
+.daycard .dn i{ font-style:normal; font-size:19px; font-weight:700; color:var(--gold); }
+.daycard .dn s{ text-decoration:none; font-size:9px; color:var(--ink-faint); }
+.daycard .dbody{ flex:1; min-width:0; }
+.daycard .dt{ font-weight:700; color:#fff; font-size:14px; }
+.daycard .dr{ font-size:11px; color:var(--ink-dim); margin-top:2px;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.daycard .dtag{ display:inline-block; font-size:9px; padding:2px 6px; margin-top:5px;
+  text-transform:uppercase; letter-spacing:.09em; background:var(--panel-hi); color:var(--ink-dim); }
+.daycard .dchk{ flex:0 0 26px; display:grid; place-items:center; font-size:18px; }
+
+/* ---------- dettaglio giorno ---------- */
+
+.dayhead{ background:var(--panel-lo); padding:16px 14px; margin-bottom:14px;
+  box-shadow:0 0 0 var(--px) var(--line); }
+.dayhead .kicker{ font-size:10px; letter-spacing:.2em; text-transform:uppercase;
+  color:var(--gold); }
+.dayhead h2{ margin:5px 0 4px; font-size:21px; color:#fff; }
+.dayhead .route{ color:var(--ink-dim); font-size:12px; }
+
+.factgrid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(112px,1fr)); gap:8px;
+  margin:14px 0; }
+.fact{ background:var(--bg2); padding:9px 10px; box-shadow:inset 0 0 0 3px var(--line); }
+.fact s{ display:block; text-decoration:none; font-size:9px; letter-spacing:.11em;
+  text-transform:uppercase; color:var(--ink-faint); }
+.fact b{ display:block; font-size:15px; color:var(--ink); margin-top:3px; }
+.fact.alert b{ color:var(--red); }
+
+.tip{ display:flex; gap:10px; padding:9px 0; border-bottom:2px solid var(--panel-hi); }
+.tip:last-child{ border-bottom:0; }
+.tip .ic{ flex:0 0 22px; font-size:15px; line-height:1.4; }
+.tip .tx{ flex:1; font-size:13px; color:var(--ink); }
+
+.bars{ display:flex; gap:3px; }
+.bars i{ width:15px; height:9px; background:var(--panel-hi); font-style:normal; }
+.bars i.on{ background:var(--gold); }
+.bars.risk i.on{ background:var(--red); }
+
+ul.acts{ margin:0; padding-left:18px; }
+ul.acts li{ margin-bottom:5px; }
+
+.warnbox{ background:#3a1e17; box-shadow:0 0 0 3px var(--red);
+  padding:11px 12px; margin:12px 0; font-size:13px; }
+.warnbox b{ color:var(--red); }
+
+/* ---------- boss ---------- */
+
+.bossgrid{ display:grid; gap:12px; }
+.bosscard{
+  cursor:pointer; text-align:left; border:0; width:100%; padding:0;
+  background:var(--panel); box-shadow:0 0 0 3px var(--line);
+  display:flex; flex-direction:column;
+}
+.bosscard .bh{ padding:13px 14px; background:linear-gradient(180deg,#2a1a2e,#1a1420);
+  box-shadow:inset 0 -3px 0 var(--line); }
+.bosscard .bh .bn{ font-size:10px; letter-spacing:.2em; text-transform:uppercase; color:var(--red); }
+.bosscard .bh h3{ margin:4px 0 3px; color:#fff; font-size:19px; text-transform:none; letter-spacing:0; }
+.bosscard .bh .bs{ font-size:11px; color:var(--ink-dim); }
+.bosscard .bb{ padding:11px 14px; display:flex; gap:16px; flex-wrap:wrap; font-size:11px;
+  color:var(--ink-dim); align-items:center; }
+.bosscard .bb b{ color:var(--ink); }
+
+.chain{ display:grid; gap:8px; }
+.chain .ci{ display:flex; gap:10px; align-items:flex-start; font-size:13px; }
+.chain .ci .cl{ flex:0 0 92px; font-size:10px; text-transform:uppercase;
+  letter-spacing:.09em; color:var(--gold); padding-top:3px; }
+
+/* ---------- diario ---------- */
+
+.moodrow{ display:flex; gap:7px; flex-wrap:wrap; }
+.moodrow button{ width:46px; height:46px; font-size:22px; background:var(--bg2);
+  border:0; cursor:pointer; box-shadow:inset 0 0 0 3px var(--line); }
+.moodrow button.on{ box-shadow:inset 0 0 0 3px var(--gold); background:var(--panel-hi); }
+
+.photos{ display:grid; grid-template-columns:repeat(auto-fill,minmax(96px,1fr)); gap:7px; margin-top:10px; }
+.photos figure{ margin:0; position:relative; overflow:hidden;
+  box-shadow:0 0 0 3px var(--line); background:var(--bg2); }
+.photos .open{ display:block; width:100%; aspect-ratio:1; padding:0; border:0;
+  background:none; cursor:zoom-in; }
+.photos img{ width:100%; height:100%; object-fit:cover; image-rendering:auto; display:block; }
+.photos figcaption{ font-size:9px; text-align:center; padding:3px 2px;
+  color:var(--ink-faint); background:var(--bg2); font-variant-numeric:tabular-nums; }
+.photos .del{ position:absolute; top:2px; right:2px; width:26px; height:26px;
+  background:rgba(0,0,0,.78); color:#fff; border:0; cursor:pointer; font-size:13px; line-height:1; }
+
+.storagebar{ margin-top:10px; padding:8px 10px; font-size:11px; color:var(--ink-dim);
+  background:var(--bg2); box-shadow:inset 0 0 0 2px var(--line); }
+.storagebar:empty{ display:none; }
+
+.jnav{ display:flex; gap:6px; align-items:center; margin-bottom:12px; }
+.jnav select{ flex:1; }
+
+/* ---------- spese ---------- */
+
+.money{ font-variant-numeric:tabular-nums; }
+.total{ text-align:center; padding:16px 12px; }
+.total .amt{ font-size:38px; font-weight:700; color:var(--gold); line-height:1;
+  text-shadow:0 4px 0 var(--gold-d); }
+.total .sub{ font-size:12px; color:var(--ink-dim); margin-top:8px; }
+
+.catrow{ margin-bottom:9px; }
+.catrow .cl,.crow .cl{ display:flex; justify-content:space-between; gap:10px;
+  font-size:12px; margin-bottom:3px; }
+.catrow .cbar,.crow .cbar{ height:13px; background:#08111b; box-shadow:inset 0 0 0 2px var(--line); }
+.catrow .cfill,.crow .cfill{ height:100%; width:0; transition:width .5s steps(10); }
+
+/* ---------- grafici ---------- */
+
+.chart{ display:grid; gap:10px; }
+.chart .cl span:last-child{ white-space:nowrap; }
+.chart .cl s{ text-decoration:none; color:var(--ink-faint); margin-left:5px; }
+
+/* colonne per giorno, impilate per categoria */
+.daychart{ display:flex; gap:2px; align-items:stretch; height:132px; }
+.daychart .dcol{ flex:1 1 0; min-width:0; display:flex; flex-direction:column; gap:4px; }
+.daychart .dstack{ flex:1; display:flex; flex-direction:column; justify-content:flex-end; gap:2px;
+  background:#08111b; box-shadow:inset 0 0 0 2px var(--line); padding:2px; }
+.daychart .dseg{ width:100%; min-height:2px; }
+.daychart .dlab{ font-size:9px; text-align:center; color:var(--ink-faint);
+  font-variant-numeric:tabular-nums; }
+.daychart .dlab.pre{ color:var(--gold); }
+
+/* ---------- conti condivisi ---------- */
+
+.bal{ display:grid; gap:6px; }
+.balrow{ display:grid; grid-template-columns:1fr auto; gap:2px 10px; align-items:baseline;
+  padding:9px 11px; background:var(--bg2); box-shadow:inset 0 0 0 2px var(--line); }
+.balrow .bn{ font-weight:700; color:#fff; }
+.balrow .bd{ grid-column:1; font-size:11px; color:var(--ink-dim); }
+.balrow .bnet{ grid-row:1 / span 2; grid-column:2; font-size:17px; font-weight:700;
+  color:var(--ink-dim); white-space:nowrap; }
+.balrow .bnet.up{ color:var(--green); }
+.balrow .bnet.down{ color:var(--red); }
+
+.settled{ margin-top:12px; padding:11px 12px; background:#16301f;
+  box-shadow:0 0 0 3px var(--green); font-size:13px; color:var(--green); }
+
+.settle{ display:grid; gap:6px; }
+.setrow{ display:flex; align-items:center; gap:9px; flex-wrap:wrap;
+  padding:10px 12px; background:#2a2417; box-shadow:0 0 0 3px var(--gold); font-size:13px; }
+.setrow .sfrom{ font-weight:700; color:var(--red); }
+.setrow .sarr{ color:var(--gold); font-weight:700; }
+.setrow .sto{ font-weight:700; color:var(--green); }
+.setrow .samt{ margin-left:auto; font-weight:700; color:#fff; white-space:nowrap; }
+.setrow .samt s{ text-decoration:none; color:var(--ink-dim); font-weight:400; font-size:11px; }
+
+/* ---------- filtro segmentato ---------- */
+
+.seg{ display:flex; gap:4px; margin-bottom:10px; flex-wrap:wrap; }
+.seg button{ flex:1; min-width:90px; min-height:38px; padding:6px 8px; font-size:11px;
+  background:var(--bg2); border:0; cursor:pointer; color:var(--ink-dim);
+  box-shadow:inset 0 0 0 2px var(--line); }
+.seg button.on{ color:var(--gold); box-shadow:inset 0 0 0 2px var(--gold); background:var(--panel-hi); }
+.seg button s{ text-decoration:none; opacity:.65; }
+
+/* ---------- persone ---------- */
+
+.moodrow button.chip{ width:auto; min-width:74px; padding:0 14px; font-size:12px;
+  font-weight:700; color:var(--ink-dim); }
+.moodrow button.chip.on{ color:var(--gold); }
+
+.peoplelist{ display:grid; gap:6px; }
+.prow{ display:flex; gap:6px; align-items:center; }
+.prow input{ flex:1; }
+
+.exrow .en s{ display:block; text-decoration:none; font-size:10px; color:var(--ink-faint); }
+
+.preset{ display:flex; gap:6px; flex-wrap:wrap; margin-top:9px; }
+.preset button{ font-size:11px; padding:7px 9px; min-height:38px; background:var(--bg2);
+  border:0; cursor:pointer; color:var(--ink-dim); box-shadow:inset 0 0 0 2px var(--line); }
+.preset button:hover{ color:var(--ink); box-shadow:inset 0 0 0 2px var(--gold); }
+
+.exlist{ display:grid; gap:5px; margin-top:12px; }
+.exrow{ display:flex; gap:9px; align-items:center; padding:8px 10px; background:var(--bg2);
+  box-shadow:inset 0 0 0 2px var(--line); font-size:12px; }
+.exrow .ei{ font-size:15px; }
+.exrow .en{ flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.exrow .ea{ font-weight:700; white-space:nowrap; }
+.exrow .ed{ font-size:10px; color:var(--ink-faint); white-space:nowrap; }
+.exrow .ex{ background:none; border:0; color:var(--ink-faint); cursor:pointer;
+  font-size:15px; padding:2px 4px; }
+.exrow .ex:hover{ color:var(--red); }
+
+/* ---------- guida ---------- */
+
+.acc{ margin-bottom:9px; }
+.acc>summary{
+  cursor:pointer; list-style:none; padding:13px 14px;
+  background:var(--panel); box-shadow:0 0 0 3px var(--line);
+  display:flex; align-items:center; gap:11px;
+  font-weight:700; font-size:14px;
+}
+.acc>summary::-webkit-details-marker{ display:none; }
+.acc>summary::after{ content:'▾'; margin-left:auto; color:var(--gold); }
+.acc[open]>summary::after{ content:'▴'; }
+.acc>summary .gi{ font-size:19px; }
+.acc .accb{ padding:14px; background:var(--panel-lo); box-shadow:0 0 0 3px var(--line);
+  margin-top:3px; font-size:13px; }
+.acc .accb p{ margin-bottom:12px; }
+.acc .accb p:last-child{ margin-bottom:0; }
+
+table.ph{ width:100%; border-collapse:collapse; font-size:13px; }
+table.ph td{ padding:7px 8px; border-bottom:2px solid var(--panel-hi); vertical-align:top; }
+table.ph td:first-child{ color:var(--gold); font-weight:700; white-space:nowrap; }
+table.ph td:last-child{ color:var(--ink-dim); }
+
+/* ---------- trofei ---------- */
+
+.trophies{ display:grid; grid-template-columns:repeat(auto-fill,minmax(96px,1fr)); gap:9px; }
+.trophy{ text-align:center; padding:11px 6px; background:var(--bg2);
+  box-shadow:inset 0 0 0 3px var(--line); opacity:.3; filter:grayscale(1); }
+.trophy.got{ opacity:1; filter:none; box-shadow:inset 0 0 0 3px var(--gold); background:var(--panel); }
+.trophy .tic{ font-size:26px; line-height:1.2; }
+.trophy .tn{ font-size:10px; font-weight:700; margin-top:5px; color:var(--ink); }
+.trophy .td{ font-size:9px; color:var(--ink-faint); margin-top:2px; line-height:1.35; }
+
+/* ---------- toast ---------- */
+
+#toast{ position:fixed; left:50%; bottom:88px; transform:translateX(-50%);
+  z-index:90; display:flex; flex-direction:column; gap:7px; align-items:center;
+  pointer-events:none; width:calc(100% - 24px); max-width:400px; }
+.toastmsg{ background:var(--panel-hi); padding:11px 15px; font-size:12px;
+  box-shadow:0 0 0 3px var(--gold); text-align:center;
+  animation:pop .3s steps(4); }
+.toastmsg.big{ font-size:14px; }
+.toastmsg .tt{ color:var(--gold); font-weight:700; display:block; font-size:11px;
+  text-transform:uppercase; letter-spacing:.13em; margin-bottom:3px; }
+@keyframes pop{ from{ transform:translateY(14px); opacity:0 } to{ transform:none; opacity:1 } }
+
+#confetti{ position:fixed; inset:0; pointer-events:none; z-index:85; display:none; }
+
+/* ---------- misc ---------- */
+
+.muted{ color:var(--ink-dim); }
+.small{ font-size:11px; }
+.center{ text-align:center; }
+.row{ display:flex; gap:9px; flex-wrap:wrap; }
+.row>*{ flex:1; min-width:0; }
+.mt{ margin-top:14px; }
+.srcnote{ font-size:10px; color:var(--ink-faint); line-height:1.6; }
+
+.modal{ position:fixed; inset:0; z-index:95; background:rgba(4,10,17,.9);
+  display:none; overflow-y:auto; padding:14px; }
+.modal.open{ display:block; }
+.modal .mbox{ max-width:640px; margin:24px auto; background:var(--panel);
+  box-shadow:0 0 0 var(--px) var(--line-hi); padding:18px; }
+
+/* ---------- desktop ---------- */
+
+@media(min-width:720px){
+  body{ font-size:15px; padding-bottom:0; }
+  #tabs{ position:sticky; top:0; bottom:auto; grid-template-columns:repeat(5,1fr);
+    max-width:900px; margin:0 auto; box-shadow:0 4px 0 var(--line); }
+  #hud{ position:static; }
+  .wrap{ padding:18px 16px 40px; }
+  .daycard .dr{ font-size:12px; }
+  .cdown .big{ font-size:76px; }
+}
+
+/* ---------- focus da tastiera ---------- */
+/* Il focus non deve dipendere dal solo colore: qui è un anello
+   pieno, coerente con i bordi netti del resto dell'interfaccia. */
+
+:focus{ outline:none; }
+.pxbtn:focus-visible,
+.iconbtn:focus-visible,
+.daycard:focus-visible,
+.bosscard:focus-visible,
+.moodrow button:focus-visible,
+.preset button:focus-visible,
+.exrow .ex:focus-visible,
+.photos .del:focus-visible,
+.acc>summary:focus-visible,
+#tabs button:focus-visible{
+  outline:4px solid var(--gold);
+  outline-offset:3px;
+  position:relative; z-index:5;
+}
+input:focus-visible,textarea:focus-visible,select:focus-visible{
+  outline:4px solid var(--gold); outline-offset:2px;
+}
+/* il file input è nascosto dentro una label che fa da pulsante */
+label.pxbtn:focus-within{ outline:4px solid var(--gold); outline-offset:3px; }
+
+/* ---------- accessibilità movimento ---------- */
+
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{
+    animation-duration:.001s !important;
+    transition-duration:.001s !important;
+  }
+}
+
+</style>
+</head>
+<body>
+
+<div id="hud">
+  <span class="lvl" id="lvl">LV 1</span>
+  <span class="xpwrap">
+    <span class="xpbar"><span class="xpfill" id="xpfill"></span></span>
+  </span>
+  <span class="stat" id="xptxt"><b>0</b> XP</span>
+  <span class="stat" id="stDays"><b>0</b>/15 giorni</span>
+  <span class="stat" id="stTro"><b>0</b>/10 🏆</span>
+  <span class="hbtns">
+    <button class="iconbtn" id="muteBtn" aria-label="Attiva la musica">🔇</button>
+  </span>
+</div>
+
+<nav id="tabs">
+  <button data-v="map"     class="active"><span class="ti">🗺</span>Mappa</button>
+  <button data-v="trek"><span class="ti">⚔</span>Trekking</button>
+  <button data-v="journal"><span class="ti">📖</span>Diario</button>
+  <button data-v="money"><span class="ti">💰</span>Tesoro</button>
+  <button data-v="guide"><span class="ti">📜</span>Manuale</button>
+</nav>
+
+<main class="wrap">
+  <section id="v-map"     class="view active"></section>
+  <section id="v-day"     class="view"></section>
+  <section id="v-trek"    class="view"></section>
+  <section id="v-journal" class="view"></section>
+  <section id="v-money"   class="view"></section>
+  <section id="v-guide"   class="view"></section>
+</main>
+
+<div id="toast" aria-live="polite"></div>
+<canvas id="confetti" aria-hidden="true"></canvas>
+
+<script>
+
+/* ==== data.js ================================================= */
+/* ============================================================
+   NORGE QUEST — DATA
+   Itinerario, trekking, guida pratica, geografia, trofei.
+   Fonte itinerario: Norv per claude - Foglio1.pdf
+   Dati pratici verificati luglio 2026 (vedi itinerario.md)
+   ============================================================ */
+
+var NQ = window.NQ || {};
+
+/* La geografia non sta più qui: coste, laghi e fiumi reali vengono generati
+   da tools/make-map.js in src/mapdata.js (Natural Earth 10m). */
+
+/* ---------- I 15 giorni ---------- */
+/* driveMin  = minuti indicati nel PDF (dato originale, non toccato)
+   realMin   = ricalcolo su strada reale, solo dove diverge sensibilmente
+   drive     = difficoltà di guida per un van, 1 (tranquilla) → 4 (impegnativa) */
+
+NQ.DAYS = [
+{
+  n:1, date:'2026-08-01', dow:'sabato',
+  from:'Sandefjord', to:'Gjendesheim', driveMin:255, realMin:270,
+  lat:61.49, lon:8.83, kind:'logistica', xp:100,
+  title:'Il ritiro del van',
+  stops:['Sandefjord','Otta','Gjendesheim'],
+  acts:[
+    'Ritiro del camper a Sandefjord e primo giro di ricognizione dei comandi',
+    'Spesa grossa prima di salire in quota',
+    'Trasferimento verso Jotunheimen, notte a Besseggen Fjellpark (Maurvangen)'
+  ],
+  brief:'Il primo giorno decide come vanno i quattro successivi. Fai la spesa grande qui, in pianura: da Otta in su i supermercati si diradano e a Gjendesheim non trovi nulla. Kiwi e Rema 1000 sono i più economici.',
+  tips:[
+    ['⚠','È sabato. Il Vinmonopolet — l\'unico posto dove si compra alcol sopra i 4,7° — chiude alle 15:00 il sabato ed è chiuso la domenica. Se vuoi qualcosa di più di una birra da supermercato, è adesso o mai più fino a lunedì.'],
+    ['🛒','Compra 6-8 litri d\'acqua di scorta: non per bere (l\'acqua norvegese è ottima) ma per non dover cercare un rifornimento il giorno di Besseggen.'],
+    ['📞','Stasera prenota il traghetto Gjende per domani mattina. Le prime corse in agosto si riempiono.'],
+    ['🔌','Controlla subito: livello acque chiare, valvola grigie, bombola gas, e dove si stacca la corrente. Farlo al buio sotto la pioggia è peggio.']
+  ],
+  drive:{ level:1, note:'E18 e E6, autostrada scorrevole. L\'ultimo tratto sulla Rv51 verso Gjendesheim sale ma è larga.' },
+  costs:[['Spesa iniziale', 1200],['Notte in campeggio', 350],['Gasolio', 900]],
+  sleep:'Besseggen Fjellpark / Maurvangen Camping — a 10 minuti dal molo del traghetto.'
+},
+{
+  n:2, date:'2026-08-02', dow:'domenica',
+  from:'Gjendesheim', to:'Lom', driveMin:50, realMin:null,
+  lat:61.84, lon:8.57, kind:'trekking', xp:400, trek:'besseggen',
+  title:'La cresta di Besseggen',
+  stops:['Gjendesheim','Memurubu','Besseggen','Lom'],
+  acts:[
+    'Traghetto Gjendesheim → Memurubu alle prime luci',
+    'TREKKING 1: la cresta di Besseggen, 6-8h',
+    'Sera a Lom: la stavkirke del 1158 e il forno di Bakeriet i Lom'
+  ],
+  brief:'Si fa il traghetto per Memurubu e si torna a piedi verso il van. Sempre in questo verso: si affronta la salita dura al fresco del mattino e si finisce dove hai il letto, non dove hai un orario da rispettare.',
+  tips:[
+    ['🥾','Il passaggio celebre è il Bandet: 300 metri di roccia ripida tra il Gjende verde smeraldo e il Bessvatnet blu. Si usano le mani. Non è alpinismo, ma non è nemmeno una passeggiata.'],
+    ['💧','Due litri a testa. In agosto i rivoli sulla cresta sono ridotti.'],
+    ['🍞','Bakeriet i Lom è una delle panetterie migliori della Norvegia. Dopo otto ore di cresta, i loro cinnamon buns sono una ricompensa seria.'],
+    ['⛪','La stavkirke di Lom è del 1158 e regge ancora in piedi con le sue travi di pino. Apre fino alle 20:00 in agosto.']
+  ],
+  drive:{ level:1, note:'Cinquanta minuti di Rv15 dopo il trekking. Poco, ma sarai cotto: guida con calma.' },
+  costs:[['Traghetto Gjende a/r', 500],['Notte in campeggio', 350]],
+  sleep:'Lom, campeggi lungo la Rv15 (Nordal Turistsenter o simili).'
+},
+{
+  n:3, date:'2026-08-03', dow:'lunedì',
+  from:'Lom', to:'Geiranger', driveMin:135, realMin:null,
+  lat:62.10, lon:7.21, kind:'fiordi', xp:200,
+  title:'Il primo fiordo vero',
+  stops:['Lom','Dalsnibba','Flydalsjuvet','Geiranger'],
+  acts:[
+    'Rv15 verso Grotli, poi Rv63 in discesa sul Geirangerfjord',
+    'Punti panoramici Dalsnibba e Flydalsjuvet',
+    'Battello nel Geirangerfjord: cascate delle Sette Sorelle'
+  ],
+  brief:'La discesa su Geiranger dagli Ørnesvingen — undici tornanti a picco sul fiordo — è uno di quei momenti in cui capisci perché sei venuto fin qui. Guarda la strada, però: ai passeggeri il panorama.',
+  tips:[
+    ['🏔','Dalsnibba: 1.500 m, strada a pedaggio (~180 NOK), vista dall\'alto sull\'intero fiordo. Vale ogni corona se il cielo è limpido. Se c\'è nebbia, risparmiali e vai dritto.'],
+    ['🚫','Evita la Gamle Strynefjellsvegen: è meravigliosa ma stretta e sterrata, non è strada da van.'],
+    ['⛴','Il battello costa 610 NOK (75 min) o 630 NOK (90 min). Prenota: in agosto con le navi da crociera in porto si riempie.'],
+    ['🅿️','I parcheggi di Geiranger sono a pagamento e pieni. Se puoi, arriva prima delle 10 o dopo le 17.']
+  ],
+  drive:{ level:3, note:'Ørnevegen: 11 tornanti stretti in discesa con 620 m di dislivello. Marcia bassa, freno motore, e non fermarti in curva.' },
+  costs:[['Pedaggio Dalsnibba', 180],['Battello Geirangerfjord', 610],['Notte in campeggio', 400]],
+  sleep:'Geiranger Camping, sul fiordo a due passi dal centro.'
+},
+{
+  n:4, date:'2026-08-04', dow:'martedì',
+  from:'Geiranger', to:'Refviksanden', driveMin:210, realMin:240,
+  lat:61.99, lon:5.03, kind:'spiaggia', xp:200,
+  title:'Verso l\'Atlantico',
+  stops:['Geiranger','Hellesylt','Stryn','Måløy','Refviksanden'],
+  acts:[
+    'Traghetto Geiranger → Hellesylt (o strada per Grotli/Stryn)',
+    'Attraversamento del Nordfjord verso la costa aperta',
+    'Arrivo a Refviksanden'
+  ],
+  brief:'Si lascia il verde chiuso dei fiordi per il blu spalancato dell\'Atlantico. Refviksanden è una spiaggia di sabbia bianca a 62° di latitudine nord: sembra il Sud America, l\'acqua fa tredici gradi.',
+  tips:[
+    ['⚠','Il traghetto Geiranger-Hellesylt è privato: l\'AutoPASS non vale e si paga a persona, circa 390-420 NOK. Se il budget stringe, la strada via Grotli e Stryn è gratis e bellissima.'],
+    ['🪨','Deviazione breve: il Kannesteinen, una roccia a fungo scolpita dal mare in duemila anni. È a pochi minuti da Refvik.'],
+    ['💨','Sulla costa esposta il vento è un fattore vero. Parcheggia il van con il muso al vento, non di fianco.'],
+    ['🌅','Qui il sole tramonta tardi e sul mare. È la sera giusta per una cena fuori dal van.']
+  ],
+  drive:{ level:2, note:'Strade larghe e panoramiche. Un traghetto o due a seconda del percorso scelto.' },
+  costs:[['Traghetto Geiranger-Hellesylt', 800],['Notte', 300]],
+  sleep:'Refviksanden: area sosta vicino alla spiaggia. Verifica i cartelli, la zona è regolamentata.'
+},
+{
+  n:5, date:'2026-08-05', dow:'mercoledì',
+  from:'Refviksanden', to:'Sognefjord', driveMin:240, realMin:null,
+  lat:61.21, lon:6.53, kind:'spiaggia', xp:150,
+  title:'Mattina sull\'oceano, sera nel fiordo',
+  stops:['Refviksanden','Gaularfjellet','Balestrand'],
+  acts:[
+    'Mattinata di relax totale fronte Atlantico, picnic sulla spiaggia',
+    'Pomeriggio in discesa verso il Sognefjord'
+  ],
+  brief:'Metà giornata senza sveglia, che a questo punto del viaggio serve. Poi verso sud lungo la E39, con due o tre traghetti da mettere in conto.',
+  tips:[
+    ['💰','I traghetti della E39 sono il punto in cui l\'AutoPASS ferje prepagato si ripaga: 50% di sconto contro il 10% del solo tag. Se non l\'hai attivato prima di partire, fallo appena hai campo.'],
+    ['🛣','Alternativa alla E39: la strada panoramica nazionale del Gaularfjellet. Più lenta, infinitamente più bella, e la piattaforma panoramica di Utsikten vale la deviazione.'],
+    ['🏖','Il Sognefjord è il fiordo più lungo del mondo: 205 km. Stasera ci dormi dentro.']
+  ],
+  drive:{ level:2, note:'E39 con traghetti, oppure Gaularfjellet: tornanti larghi e ben tenuti, fattibili in van.' },
+  costs:[['Traghetti E39 (van)', 800],['Notte in campeggio', 350]],
+  sleep:'Zona Balestrand o Vangsnes, sul Sognefjord.'
+},
+{
+  n:6, date:'2026-08-06', dow:'giovedì',
+  from:'Sognefjord', to:'Eidfjord', driveMin:270, realMin:null,
+  lat:60.47, lon:7.07, kind:'fiordi', xp:250,
+  title:'Flåm e la ferrovia impossibile',
+  stops:['Sognefjord','Flåm','Stegastein','Eidfjord'],
+  acts:[
+    'Guida lungo il Sognefjord',
+    'Pomeriggio a Flåm: Flåmsbana o kayak sull\'Aurlandsfjord',
+    'Trasferimento serale a Eidfjord'
+  ],
+  brief:'La Flåmsbana sale 866 metri in venti chilometri con pendenze da record. È spettacolare ed è anche piena di gente scesa dalle navi. Il kayak sull\'Aurlandsfjord costa meno, dura di più e te lo ricordi meglio.',
+  tips:[
+    ['🚂','Flåmsbana: ~510 NOK andata, ~730 a/r in alta stagione. Se la fai, prendi la prima corsa del mattino.'],
+    ['🛶','Il kayak sull\'Aurlandsfjord è l\'alternativa che consiglierei: silenzio, pareti a picco, e nessuna coda.'],
+    ['⚠','Stegastein, la piattaforma sospesa: la strada che ci porta è strettissima e con un van grande è sconsigliata. C\'è la navetta da Flåm, usala.'],
+    ['🚇','Sulla strada per Eidfjord passi nel tunnel di Lærdal: 24,5 km, il più lungo del mondo, con tre grotte illuminate di azzurro per non farti impazzire.']
+  ],
+  drive:{ level:2, note:'Fiordo e gallerie. La Aurlandsfjellet "Snøvegen" è aperta ad agosto ed è un\'alternativa panoramica al tunnel.' },
+  costs:[['Flåmsbana o kayak', 730],['Notte in campeggio', 350]],
+  sleep:'Eidfjord, campeggi sul fiordo.'
+},
+{
+  n:7, date:'2026-08-07', dow:'venerdì',
+  from:'Eidfjord', to:'Jondal', driveMin:260, realMin:330, warn:true,
+  lat:60.27, lon:6.28, kind:'citta', xp:250,
+  title:'Vøringsfossen, Bergen e ritorno',
+  stops:['Eidfjord','Vøringsfossen','Bergen','Jondal'],
+  acts:[
+    'Cascata Vøringsfossen e il ponte a gradini',
+    'Bergen: funicolare Fløibanen e il quartiere Bryggen',
+    'Traghetto Tørvikbygd → Jondal'
+  ],
+  brief:'È la giornata più densa dell\'itinerario e va guardata in faccia adesso: Bergen sta a nord-ovest, Jondal a sud-est, e rifarsi indietro costa più di un\'ora di guida in più rispetto al foglio.',
+  tips:[
+    ['⚠','Il PDF dice 4h20 di guida. Il percorso reale è più vicino a 5h30, senza contare Vøringsfossen, la funicolare e Bryggen. Qualcosa va tagliato: o Bergen si accorcia a tre ore scarse, o si dorme vicino a Bergen e Jondal si fa domani presto.'],
+    ['💦','Vøringsfossen: 182 metri di salto. Il nuovo ponte a gradini che scavalca la gola è recente e spettacolare, e si vede in mezz\'ora.'],
+    ['🅿️','Parcheggiare un van a Bergen è un problema serio. Il Bygarasjen ha un limite di altezza. Meglio lasciare il van in periferia e prendere il bus, o il Bergen Storsenter.'],
+    ['☔','Bergen piove in media 200 giorni l\'anno. Non è sfortuna, è il clima. Tieni il guscio a portata.']
+  ],
+  drive:{ level:3, note:'Tanti chilometri, tunnel a pagamento e traffico urbano a Bergen. La giornata più stancante alla guida.' },
+  costs:[['Fløibanen a/r', 200],['Parcheggi Bergen', 250],['Traghetto Jondal', 250],['Notte', 350]],
+  sleep:'Jondal, sull\'Hardangerfjord. Vicino a Odda per la sveglia di domani.'
+},
+{
+  n:8, date:'2026-08-08', dow:'sabato',
+  from:'Jondal', to:'Odda', driveMin:30, realMin:75, warn:true,
+  lat:60.07, lon:6.55, kind:'trekking', xp:800, trek:'trolltunga',
+  title:'Trolltunga — il giorno',
+  stops:['Jondal','Skjeggedal','Trolltunga','Odda'],
+  acts:[
+    'Sveglia alle 4:30, trasferimento a P2 Skjeggedal',
+    'TREKKING 2: Trolltunga, 10-12h a/r',
+    'Crollo a Odda'
+  ],
+  brief:'Il giorno per cui ti alleni. Ventotto chilometri da P2, venti se prendi la navetta fino a P3 Mågelitopp. Non è tecnico: è lungo, e la lunghezza è esattamente il problema.',
+  tips:[
+    ['🚌','La navetta P2 → P3 costa da 150 NOK e ti risparmia un\'ora e mezza di salita su asfalto. Per tratta. Prendila: quei soldi comprano le gambe che ti servono al ritorno.'],
+    ['🕐','Slot navetta mattina 6:30-11:00, prenotabile online e drop-in a P2. Pomeriggio 14:30-19:00 solo drop-in. Parcheggio P2: 220 NOK.'],
+    ['⛔','La regola d\'oro: se alle 14:00 non sei sulla lingua di roccia, torni indietro. Nessuna foto vale il rientro al buio su quel terreno.'],
+    ['🎒','Tre litri d\'acqua, cibo per 3.000 kcal, guscio antivento, guanti, e la frontale anche se pensi di non usarla. Sopra i mille metri ad agosto può nevicare.'],
+    ['🌡','Controlla yr.no stasera. Se dà vento forte o pioggia continua, sposta a domani: hai il giorno di recupero come cuscinetto.']
+  ],
+  drive:{ level:1, note:'Poca strada, ma il PDF sottostima: Jondal-Odda è circa 1h15. Consideralo stasera quando punti la sveglia.' },
+  costs:[['Parcheggio P2 Skjeggedal', 220],['Navetta P3 a/r', 300],['Notte a Odda', 350]],
+  sleep:'Odda, Trolltunga Camping o simili. Prenota: la sera dell\'8 agosto è tutto pieno.'
+},
+{
+  n:9, date:'2026-08-09', dow:'domenica',
+  from:'Odda', to:'Karmøy', driveMin:165, realMin:null,
+  lat:59.25, lon:5.22, kind:'spiaggia', xp:150,
+  title:'Il giorno del recupero',
+  stops:['Odda','Haugesund','Åkrasanden','Skudeneshavn'],
+  acts:[
+    'Trasferimento sulla costa via E134',
+    'Recupero fisico e spiaggia di Åkrasanden',
+    'Visita a Skudeneshavn'
+  ],
+  brief:'Le gambe sono a pezzi e va bene così. Åkrasanden è sabbia bianca e dune, Skudeneshavn è un villaggio di case bianche di legno tra i più belli della Norvegia. Zero dislivello, tutto il giorno.',
+  tips:[
+    ['🧺','Giornata perfetta per la manutenzione noiosa: bucato, scarico acque grigie e nere, pieno d\'acqua potabile, pieno di gasolio.'],
+    ['🏘','Skudeneshavn: un centinaio di case bianche dell\'Ottocento, vicoli stretti, porto. Ci vuole un\'ora e ne vale la pena.'],
+    ['🦵','Cammina un po\' in piano, anche solo venti minuti sulla spiaggia. Fermarsi del tutto il giorno dopo Trolltunga fa più male che bene.']
+  ],
+  drive:{ level:1, note:'E134 verso la costa, strada ampia e scorrevole. Nessuna difficoltà.' },
+  costs:[['Notte in campeggio', 350],['Gasolio', 900],['Spesa', 700]],
+  sleep:'Karmøy, campeggi vicino ad Åkrasanden.'
+},
+{
+  n:10, date:'2026-08-10', dow:'lunedì',
+  from:'Karmøy', to:'Lysebotn', driveMin:180, realMin:null,
+  lat:59.05, lon:6.66, kind:'trekking', xp:500, trek:'preikestolen',
+  title:'Il Pulpito sul Lysefjord',
+  stops:['Karmøy','Preikestolen','Lysevegen','Lysebotn'],
+  acts:[
+    'Traghetto Mortavika-Arsvågen e Ryfylketunnelen',
+    'TREKKING 3: Preikestolen, 4-5h a/r',
+    'Discesa a Lysebotn lungo la Lysevegen'
+  ],
+  brief:'Preikestolen è il trekking più facile dei quattro e il più affollato: ottocento metri quadri di roccia piatta a picco per 604 metri sul Lysefjord. Il problema non è la salita, è il parcheggio.',
+  tips:[
+    ['🅿️','Parcheggio 250-275 NOK al giorno, apre alle 6:00. Mille posti su due aree, e tra le 9 e le 12 sono pieni. Arriva prima delle 8 o dopo le 16.'],
+    ['🚇','Il Ryfylketunnelen è il tunnel sottomarino più profondo del mondo: scende a -292 m. Il pedaggio è caro ma non ci sono alternative sensate.'],
+    ['⚠','Sulla roccia non ci sono parapetti e la gente fa cose stupide per una foto. Stai lontano dal bordo bagnato.'],
+    ['🛑','Attenzione all\'ordine della giornata: trekking e poi Lysevegen. Se arrivi ai 27 tornanti già svuotato, valuta di dormire in cima a Øygardstøl e scendere domani mattina.']
+  ],
+  drive:{ level:4, note:'Lysevegen: 27 tornanti, 900 m di dislivello e un tunnel elicoidale di 1.100 metri con le curve dentro. Con un van è la strada più impegnativa del viaggio.' },
+  costs:[['Traghetto E39', 400],['Pedaggio Ryfast', 350],['Parcheggio Preikestolen', 275],['Notte', 300]],
+  sleep:'Lysebotn, campeggio in fondo al fiordo. Oppure Øygardstøl in cima, se preferisci non scendere stanco.'
+},
+{
+  n:11, date:'2026-08-11', dow:'martedì',
+  from:'Lysebotn', to:'Stavanger', driveMin:150, realMin:null,
+  lat:58.97, lon:5.73, kind:'trekking', xp:600, trek:'kjerag',
+  title:'Il masso nel vuoto',
+  stops:['Lysebotn','Øygardstøl','Kjeragbolten','Stavanger'],
+  acts:[
+    'TREKKING 4: Kjeragbolten (oppure crociera nel Lysefjord)',
+    'Trasferimento a Stavanger',
+    'Aperitivo in Øvre Holmegate'
+  ],
+  brief:'Dodici chilometri e ottocento metri di dislivello, ma distribuiti su tre saliscendi ripidi di roccia liscia con catene fisse. Il Kjeragbolten è un masso incastrato tra due pareti a 984 metri sul fiordo, e ci si può salire sopra.',
+  tips:[
+    ['⛔','Se la roccia è bagnata o tira vento, non salire sul masso. Punto. Il panorama è lo stesso anche da un metro più indietro, e ci sono morti che dicono il contrario.'],
+    ['⛓','Le catene sui tre pendii non sono decorative: servono davvero, sia in salita che in discesa.'],
+    ['🅿️','Øygardstøl: 300 NOK oltre le due ore, gratis sotto.'],
+    ['⛵','Alternativa legittima: la crociera nel Lysefjord da Lysebotn. Dopo quattro trekking in dieci giorni non è una resa, è buon senso.'],
+    ['🍸','Øvre Holmegate a Stavanger è la via delle case dipinte di tutti i colori. È il posto giusto per il primo aperitivo vero del viaggio.']
+  ],
+  drive:{ level:3, note:'Se scendi da Øygardstøl verso Stavanger eviti i tornanti peggiori. Da Lysebotn invece si risale la Lysevegen.' },
+  costs:[['Parcheggio Kjerag', 300],['Aperitivo Stavanger', 400],['Notte', 350]],
+  sleep:'Stavanger, campeggio Mosvangen o area sosta in zona.'
+},
+{
+  n:12, date:'2026-08-12', dow:'mercoledì',
+  from:'Stavanger', to:'Borestranda', driveMin:30, realMin:null,
+  lat:58.80, lon:5.53, kind:'spiaggia', xp:200,
+  title:'Surf sul Jæren',
+  stops:['Stavanger','Borestranda','Obrestad'],
+  acts:[
+    'Mattina di surf a Borestranda',
+    'Dune di sabbia e relax',
+    'Faro di Obrestad'
+  ],
+  brief:'Il Jæren è l\'unico tratto di Norvegia che sembra Danimarca: piatto, ventoso, con dune e onde lunghe. Ci sono scuole di surf sulla spiaggia e la muta è obbligatoria, non opzionale.',
+  tips:[
+    ['🏄','Onde costanti e fondale sabbioso: è un posto da principianti. Il noleggio con muta si trova direttamente a Borestranda.'],
+    ['⚠','La sosta notturna qui è regolamentata, è area protetta di dune. Usa i parcheggi ufficiali e non improvvisare: da queste parti controllano.'],
+    ['🌊','L\'acqua fa 15-16 gradi ad agosto. Con la muta si sta bene un\'ora abbondante.'],
+    ['🗼','Il faro di Obrestad e la spiaggia di Orrestanda sono a pochi minuti, se vuoi allungare.']
+  ],
+  drive:{ level:1, note:'Mezz\'ora di strada piatta. La giornata più riposante alla guida di tutto il viaggio.' },
+  costs:[['Noleggio surf', 500],['Notte in campeggio', 350]],
+  sleep:'Borestranda, campeggio ufficiale sulle dune.'
+},
+{
+  n:13, date:'2026-08-13', dow:'giovedì',
+  from:'Borestranda', to:'Kristiansand', driveMin:195, realMin:null,
+  lat:58.15, lon:8.00, kind:'citta', xp:200,
+  title:'La costa del sud',
+  stops:['Borestranda','Flekkefjord','Kristiansand'],
+  acts:[
+    'Discesa lungo la E39 sulla costa meridionale',
+    'Sosta a Flekkefjord (Hollenderbyen)',
+    'Kristiansand: Posebyen e cena alla Fiskebrygga'
+  ],
+  brief:'Il Sørlandet è la Norvegia che i norvegesi si tengono per sé: case bianche di legno, arcipelaghi bassi, acqua che d\'agosto arriva a venti gradi. Un altro paese rispetto ai fiordi.',
+  tips:[
+    ['🏚','Flekkefjord ha il quartiere Hollenderbyen, costruito quando qui si commerciava con gli olandesi. Sosta pranzo perfetta.'],
+    ['🎣','La Fiskebrygga di Kristiansand è il posto per la cena: pesce, banchi sull\'acqua, e a metà agosto è ancora luce alle 21.'],
+    ['🏘','Posebyen è il centro storico di case bianche di legno, sopravvissuto agli incendi. Si gira a piedi in un\'ora.']
+  ],
+  drive:{ level:2, note:'E39 costiera, curve larghe e panorama. Nessuna difficoltà particolare.' },
+  costs:[['Cena fuori', 900],['Notte in campeggio', 400]],
+  sleep:'Kristiansand, Roligheden Camping vicino alla spiaggia.'
+},
+{
+  n:14, date:'2026-08-14', dow:'venerdì',
+  from:'Kristiansand', to:'Kristiansand', driveMin:60, realMin:null,
+  lat:58.30, lon:8.45, kind:'spiaggia', xp:150,
+  title:'Riviera del Sørlandet',
+  stops:['Kristiansand','Lillesand','Grimstad'],
+  acts:[
+    'Giornata libera tra riviera e calette',
+    'Lillesand e Grimstad',
+    'Bagno a Hamresanden o Bystranda'
+  ],
+  brief:'Il giorno cuscinetto. Se lungo il viaggio è saltato qualcosa — un trekking rimandato per il meteo, un fiordo visto di corsa — questo è lo spazio per recuperarlo. Altrimenti: mare e niente.',
+  tips:[
+    ['🌤','Se avessi dovuto rimandare Trolltunga o il Kjerag per il tempo, questa giornata era la tua rete di sicurezza. Se sei arrivato qui con tutto fatto, te la sei guadagnata.'],
+    ['⛵','Lillesand e Grimstad sono due porti di case bianche a mezz\'ora l\'uno dall\'altro. Grimstad è la città di Ibsen.'],
+    ['🧳','Inizia a mettere ordine nel van stasera: domani è giorno di riconsegna e farlo di corsa la mattina è la ricetta per dimenticare qualcosa.']
+  ],
+  drive:{ level:1, note:'Spostamenti brevi lungo la costa.' },
+  costs:[['Varie', 500],['Notte in campeggio', 400]],
+  sleep:'Kristiansand o dintorni, stessa base della sera prima.'
+},
+{
+  n:15, date:'2026-08-15', dow:'sabato',
+  from:'Kristiansand', to:'Sandefjord', driveMin:120, realMin:180, warn:true,
+  lat:59.13, lon:10.22, kind:'logistica', xp:200,
+  title:'Riconsegna e rientro',
+  stops:['Kristiansand','Sandefjord','Torp'],
+  acts:[
+    'Rientro a Sandefjord lungo la E18',
+    'Pulizia, scarico e riconsegna del camper',
+    'Volo di rientro da Torp'
+  ],
+  brief:'Ultimo trasferimento. Lascia margine: la riconsegna di un camper porta via più tempo di quanto chiunque preveda, e l\'aeroporto di Torp è sì vicino, ma piccolo.',
+  tips:[
+    ['⚠','Il PDF dice 2h ma sono circa 230 km: conta 3 ore piene sulla E18. Parti presto.'],
+    ['🧽','Prima della riconsegna: pieno di gasolio, scarico acque grigie e nere, cassetta WC vuota e sciacquata, interno pulito. Molti noleggi trattengono dalla cauzione se manca anche solo una di queste.'],
+    ['📸','Prima di svuotare il van, fai due foto del contachilometri e dell\'interno pulito. Vale come prova se poi c\'è una contestazione.'],
+    ['🏁','Poi apri il diario e rileggi il giorno 1. Sono passati quindici giorni e sembrano tre mesi.']
+  ],
+  drive:{ level:2, note:'E18, autostrada. Facile ma lunga: 230 km.' },
+  costs:[['Gasolio finale', 1200],['Pedaggi E18', 300]],
+  sleep:'—'
+}
+];
+
+/* ---------- I 4 trekking ---------- */
+
+NQ.TREKS = {
+  besseggen:{
+    name:'Besseggen', day:2, boss:1,
+    sub:'La cresta tra due laghi di colore diverso',
+    km:14, up:1100, hours:'6-8h', stars:3,
+    lat:61.49, lon:8.83,
+    startBy:'08:00', margin:9,
+    desc:'Il traghetto ti scarica a Memurubu e da lì si torna a piedi verso Gjendesheim, dove hai lasciato il van. Il momento che tutti ricordano è il Bandet: una rampa di roccia ripida stretta fra il Gjende, verde smeraldo per via del limo glaciale, e il Bessvatnet, blu profondo e trecento metri più in alto. Due laghi che si toccano e hanno colori diversi.',
+    kit:['2 litri d\'acqua a testa','Scarponi con caviglia alta','Guscio antivento','Guanti leggeri','Pranzo al sacco','Frontale'],
+    risks:[
+      'Il Bandet si fa usando le mani: se soffri di vertigini, sappilo prima di salire sul traghetto.',
+      'Con roccia bagnata la salita diventa parecchio più insidiosa.',
+      'Una volta a Memurubu l\'unica via di uscita è a piedi o l\'ultimo traghetto.'
+    ],
+    logi:[
+      ['Traghetto', 'Gjendesheim → Memurubu, fino a 8 corse al giorno. Stagione da inizio giugno a inizio ottobre. Bagaglio 100 NOK a collo.'],
+      ['Verso', 'Sempre Memurubu → Gjendesheim: si sale al fresco e si finisce al van.'],
+      ['Prenotazione', 'Da fare la sera prima. In agosto le prime corse si riempiono.']
+    ],
+    turnaround:'Nessun punto di non ritorno critico: la cresta è un percorso lineare verso il van.'
+  },
+  trolltunga:{
+    name:'Trolltunga', day:8, boss:2,
+    sub:'La lingua del troll — l\'impresa del viaggio',
+    km:20, up:800, hours:'10-12h', stars:5,
+    lat:60.12, lon:6.74,
+    startBy:'06:30', margin:14,
+    desc:'Venti chilometri dalla navetta di P3 Mågelitopp, ventotto se parti da P2. Non c\'è un passaggio tecnico in tutto il percorso: è la distanza a fare il danno, con la salita concentrata nella prima parte e il ritorno che va fatto tutto sulle stesse gambe. La lingua di roccia sporge nel vuoto a 700 metri sopra il lago Ringedalsvatnet.',
+    kit:['3 litri d\'acqua','Cibo per 3.000 kcal','Guscio antivento e antipioggia','Guanti e berretto','Frontale (obbligatoria)','Scarponi rodati, non nuovi','Powerbank'],
+    risks:[
+      'Sopra i 1.000 metri può nevicare anche ad agosto: il meteo cambia in un\'ora.',
+      'La coda per la foto sulla lingua può arrivare a un\'ora e mezza in alta stagione.',
+      'L\'ipotermia è il rischio reale, non la caduta: bagnato più vento più stanchezza.'
+    ],
+    logi:[
+      ['Parcheggio P2', 'Skjeggedal, 220 NOK al parchimetro.'],
+      ['Navetta P2 → P3', 'Da 150 NOK a tratta, risparmia circa 1h30 di salita su asfalto per verso.'],
+      ['Orari navetta', 'Mattina 6:30-11:00 (prenotabile + drop-in), pomeriggio 14:30-19:00 (solo drop-in).'],
+      ['Stagione 2026', '8 giugno – 30 settembre, meteo permettendo.']
+    ],
+    turnaround:'Se alle 14:00 non sei alla lingua, torna indietro. Il tramonto dell\'8 agosto a Odda è intorno alle 21:20 e il rientro al buio su quel terreno non è un\'opzione.'
+  },
+  preikestolen:{
+    name:'Preikestolen', day:10, boss:3,
+    sub:'Il pulpito a picco sul Lysefjord',
+    km:8, up:460, hours:'4-5h', stars:2,
+    lat:58.99, lon:6.19,
+    startBy:'07:00', margin:5,
+    desc:'Il più corto e il più frequentato dei quattro. Il sentiero è gradinato e curato quasi ovunque, e in cima ti trovi su una piattaforma di roccia piatta di ottocento metri quadri che finisce di colpo, seicentoquattro metri sopra il Lysefjord. Senza parapetti.',
+    kit:['1,5 litri d\'acqua','Scarpe da trekking','Antivento','Snack'],
+    risks:[
+      'Nessuna protezione sul bordo, e la roccia bagnata è scivolosa.',
+      'Folla vera: le foto senza gente si fanno solo all\'alba o alla sera.',
+      'Il parcheggio si riempie tra le 9 e le 12.'
+    ],
+    logi:[
+      ['Parcheggio', '250-275 NOK al giorno (40 NOK fino a 2 ore). Aperto dalle 6:00 alle 22:00.'],
+      ['Posti', 'Circa 1.000 su due aree. Pieni in tarda mattinata in agosto.'],
+      ['Strategia', 'Arrivare prima delle 8 o dopo le 16. Il tramonto alle 21:30 lascia margine abbondante.']
+    ],
+    turnaround:'Con quattro ore di cammino e sedici ore di luce non c\'è nessuna fretta reale.'
+  },
+  kjerag:{
+    name:'Kjeragbolten', day:11, boss:4,
+    sub:'Il masso incastrato nel vuoto',
+    km:12, up:800, hours:'6-7h', stars:4,
+    lat:59.03, lon:6.59,
+    startBy:'08:00', margin:8,
+    desc:'Dodici chilometri con ottocento metri di dislivello che sembrano pochi finché non scopri come sono distribuiti: tre saliscendi ripidi su lastroni di roccia liscia, attrezzati con catene fisse. In fondo, il Kjeragbolten: un masso di cinque metri cubi incastrato fra due pareti, con novecentottantaquattro metri di vuoto sotto.',
+    kit:['2 litri d\'acqua','Scarponi con suola che tiene sul liscio','Guanti (le catene sono d\'acciaio)','Antivento','Frontale'],
+    risks:[
+      'Sul masso non si sale se piove, se la roccia è umida o se c\'è vento. Nessuna eccezione.',
+      'I lastroni con le catene sono più insidiosi in discesa che in salita, con le gambe stanche.',
+      'La nebbia arriva rapidamente e cancella i segnavia.'
+    ],
+    logi:[
+      ['Parcheggio', 'Øygardstøl, 300 NOK oltre le 2 ore, gratis sotto.'],
+      ['Strada', 'Aperta da metà maggio a novembre.'],
+      ['Alternativa', 'Crociera nel Lysefjord da Lysebotn: il fiordo visto dal basso, zero dislivello.']
+    ],
+    turnaround:'Se alle 14:00 non sei al masso, rientra. La Lysevegen o la strada per Stavanger vanno affrontate con la luce.'
+  }
+};
+
+/* ---------- Manuale del vichingo ---------- */
+
+NQ.GUIDE = [
+{
+  id:'sosta', icon:'🏕', title:'Sosta libera: come funziona davvero',
+  body:[
+    'C\'è un equivoco che gira in tutti i gruppi di camperisti e conviene chiarirlo subito, perché costa multe. L\'<b>allemannsretten</b>, il diritto di libero accesso alla natura, è una cosa magnifica e vale per le <b>persone a piedi</b>: puoi piantare una tenda quasi ovunque in terreno non coltivato, restare due notti, e nessuno ti dice niente.',
+    'Ai veicoli a motore non si applica. Per il van vale la <b>Motorferdselloven §3</b>, che vieta di uscire da strade e piazzole stabilite. Tutte e quattro le ruote devono restare su superficie carrabile.',
+    'In pratica, quello che puoi fare è dormire in piazzole, aree di sosta e parcheggi dove non è vietato, a <b>150 metri</b> da case o baite abitate. Quello che non puoi fare è attraversare un prato per andare a metterti in riva al lago.',
+    '<b>I cartelli contano.</b> "Camping forbudt" o il disegno di un camper barrato sono divieti sanzionabili, e in alta stagione le multe le fanno sul serio. Nei posti turistici — Preikestolen, Trolltunga, il Lysefjord — il controllo è sistematico.',
+    'Regola pratica che funziona: arriva tardi, riparti presto, non tirare fuori tavolino e sedie, non lasciare niente. Un van che dorme è tollerato quasi ovunque. Un van che campeggia, no.'
+  ]
+},
+{
+  id:'traghetti', icon:'⛴', title:'Traghetti e pedaggi',
+  body:[
+    'I traghetti norvegesi si pagano <b>per lunghezza del veicolo</b>, non per peso o passeggeri. Un van fra gli 8 e i 10 metri sta nella fascia che costa fra 265 e 500 NOK a tratta. Su quindici giorni di fiordi, sono parecchi attraversamenti.',
+    '<b>Qui si risparmiano soldi veri.</b> Con il solo tag AutoPASS hai il 10% di sconto. Con un <b>conto AutoPASS ferje prepagato</b> arrivi al 50%, e i passeggeri sono inclusi nel prezzo del veicolo. Se non l\'hai attivato prima di partire, fallo appena hai connessione: si ripaga in tre traversate.',
+    '<b>Eccezione da ricordare:</b> il Geiranger-Hellesylt è un traghetto turistico privato, non sovvenzionato. L\'AutoPASS non vale e si paga a persona, circa 390-420 NOK. Il percorso via Grotli e Stryn è gratuito e altrettanto bello.',
+    'I pedaggi stradali (bomstasjon) si leggono automaticamente dalla targa e arrivano al noleggiatore, che poi te li addebita con una commissione. È normale, mettili in conto. Il Ryfylketunnelen verso Stavanger è fra i più cari.',
+    'Gasolio: intorno a <b>22,4 NOK al litro</b> nel 2026. Un pieno da 60 litri sono circa 1.350 NOK, cioè 115 euro.'
+  ]
+},
+{
+  id:'strade', icon:'🛣', title:'Le strade che vanno prese sul serio',
+  body:[
+    '<b>Lysevegen (giorno 10-11).</b> È la più impegnativa del viaggio: 27 tornanti, 900 metri di dislivello e un <b>tunnel elicoidale di 1.100 metri con le curve dentro</b>, al buio. Non è pericolosa se la guidi lucido e in marcia bassa, ma va affrontata riposato. Se dopo Preikestolen ti senti svuotato, dormi a Øygardstøl in cima e scendi domattina. In alternativa c\'è il traghetto Lysebotn-Forsand, che prende anche i van grandi.',
+    '<b>Ørnevegen, la strada delle aquile (giorno 3).</b> Undici tornanti che scendono su Geiranger. Larga abbastanza, ma le curve sono strette e il fondo in discesa mette sotto sforzo i freni. Freno motore, non pedale.',
+    '<b>Strada per Stegastein (giorno 6).</b> Strettissima, con incroci difficili. Con un van grande non ci si va: c\'è la navetta da Flåm ed è la scelta giusta.',
+    '<b>Gamle Strynefjellsvegen (giorno 3).</b> Bellissima, storica, sterrata e stretta. Non è strada da camper. La Rv15 normale passa poco distante.',
+    'Regola generale sulle strade minori dei fiordi: sono spesso a una corsia e mezza con piazzole di scambio (<i>møteplass</i>). Chi ha la piazzola più vicina fa retromarcia. È una convenzione, non una cortesia.'
+  ]
+},
+{
+  id:'van', icon:'🔧', title:'Il check quotidiano del van',
+  body:[
+    'Cinque minuti la sera, e non hai sorprese la mattina.',
+    '<b>Acqua potabile</b> — riempi ogni volta che trovi un punto <i>drikkevann</i>. Nei campeggi è sempre disponibile, nelle aree di sosta spesso.',
+    '<b>Acque grigie</b> — scarico solo nelle stazioni apposite (<i>tømmestasjon</i>). Sono segnalate e presenti in quasi tutti i campeggi e in molte aree di servizio.',
+    '<b>Cassetta WC</b> — stessa regola, e vale la pena svuotarla prima che sia piena, non quando lo è.',
+    '<b>Gas</b> — le bombole italiane spesso non sono compatibili con gli attacchi norvegesi. Verifica con il noleggiatore il giorno 1 e chiedi dove si cambiano.',
+    '<b>Gasolio</b> — non scendere mai sotto un quarto di serbatoio nelle zone interne. Fra Lom e Geiranger, o intorno al Lysefjord, i distributori sono radi e alcuni chiudono presto.',
+    '<b>Elettricità</b> — nei campeggi la presa è schuko standard. Ricarica tutto quando sei attaccato: powerbank, frontale, telefoni.'
+  ]
+},
+{
+  id:'meteo', icon:'🌦', title:'Meteo, luce e sicurezza',
+  body:[
+    'Ad agosto in Norvegia meridionale hai fra le <b>15 e le 17 ore di luce</b>: alle nove di sera è ancora pieno giorno. È il tuo margine di sicurezza più grande sui trekking, e va usato — ma non ci si può appoggiare al buio.',
+    '<b>yr.no</b> è il servizio meteo nazionale ed è il più affidabile in montagna. Controllalo la sera prima di ogni trekking. Se dà vento sostenuto o pioggia continua sopra i mille metri, sposta il programma: hai il giorno 14 come cuscinetto.',
+    'La regola dei tre strati non è un cliché qui: <b>base tecnica, pile, guscio antivento</b>. Il cotone in montagna è pericoloso, perché una volta bagnato non asciuga e ti raffredda.',
+    '<b>Emergenze:</b> 112 polizia, 113 ambulanza, 110 vigili del fuoco. Funzionano anche senza credito e senza SIM.',
+    'Il campo telefonico manca in buona parte dei fiordi e in quasi tutti i tunnel. Scarica le mappe offline prima di partire e non contare sulla connessione per orientarti.',
+    'Se un trekking va storto — meteo, stanchezza, un ginocchio — tornare indietro non è fallire. La montagna resta lì.'
+  ]
+},
+{
+  id:'soldi', icon:'💳', title:'Soldi e vita quotidiana',
+  body:[
+    'La Norvegia è <b>praticamente senza contanti</b>. Si paga con carta ovunque, anche il caffè da due euro e i parchimetri. Porta due carte di circuiti diversi come riserva, non contanti.',
+    'I supermercati economici sono <b>Kiwi, Rema 1000 ed Extra</b>. Coop e Meny costano di più. Fai la spesa grande in pianura: nei fiordi i prezzi salgono e gli orari si accorciano.',
+    '<b>Alcol:</b> nei supermercati trovi solo birra fino a 4,7 gradi, e la vendita si ferma alle 20:00 nei giorni feriali e alle 18:00 il sabato. Tutto il resto si compra al <b>Vinmonopolet</b>, che è statale, chiude alle 15:00 il sabato ed è chiuso la domenica.',
+    'Mangiare fuori costa: una cena semplice sta sui 300-400 NOK a testa. Cucinare nel van è il motivo per cui questo viaggio è sostenibile.',
+    'L\'acqua del rubinetto è eccellente ovunque, comprese le fontane pubbliche. Comprare acqua in bottiglia in Norvegia è buttare soldi.'
+  ]
+},
+{
+  id:'parole', icon:'💬', title:'Norvegese di sopravvivenza',
+  phrases:[
+    ['Hei','Ciao'],
+    ['Takk / Tusen takk','Grazie / Mille grazie'],
+    ['Ha det!','Ciao, andando via'],
+    ['Unnskyld','Scusa'],
+    ['Snakker du engelsk?','Parli inglese? (risposta: sempre sì)'],
+    ['Hvor mye koster det?','Quanto costa?'],
+    ['Det er dyrt!','È caro! — la frase che userai di più'],
+    ['Kan jeg parkere her?','Posso parcheggiare qui?'],
+    ['Er det lov å campe her?','È permesso sostare qui?'],
+    ['Hvor er nærmeste tømmestasjon?','Dov\'è lo scarico camper più vicino?'],
+    ['Ett glass øl, takk','Una birra, grazie'],
+    ['Skål!','Cin cin!'],
+    ['Fint vær i dag','Bel tempo oggi — rompighiaccio nazionale'],
+    ['Jeg er sliten','Sono stanco'],
+    ['Hjelp!','Aiuto!']
+  ],
+  signs:[
+    ['Camping forbudt','Vietato campeggiare — da riconoscere al volo'],
+    ['Privat vei','Strada privata'],
+    ['Bomstasjon / Bomveg','Casello / strada a pedaggio'],
+    ['Rasteplass','Area di sosta'],
+    ['Tømmestasjon','Scarico acque camper'],
+    ['Drikkevann','Acqua potabile'],
+    ['Ferjekai','Imbarco traghetto'],
+    ['Møteplass','Piazzola di scambio su strada stretta'],
+    ['Matbutikk','Alimentari'],
+    ['Utsikt','Punto panoramico']
+  ]
+}
+];
+
+/* ---------- Trofei ---------- */
+
+NQ.TROPHIES = [
+  { id:'besseggen', icon:'🗡', name:'Sul filo',           desc:'Attraversata la cresta di Besseggen' },
+  { id:'trolltunga',icon:'👅', name:'Lingua del troll',   desc:'Portata a casa Trolltunga' },
+  { id:'preikestolen',icon:'🪨',name:'Il pulpito',        desc:'In piedi sul Preikestolen' },
+  { id:'kjerag',    icon:'💀', name:'Nel vuoto',          desc:'Arrivato al Kjeragbolten' },
+  { id:'surf',      icon:'🏄', name:'Surfista artico',    desc:'Entrato in acqua sul Jæren' },
+  { id:'cronista',  icon:'📖', name:'Cronista',           desc:'Diario scritto per tutti e 15 i giorni' },
+  { id:'contabile', icon:'💰', name:'Contabile vichingo', desc:'Registrate 10 spese' },
+  { id:'fotografo', icon:'📷', name:'Occhio di Odino',    desc:'10 foto nel diario' },
+  { id:'nottambulo',icon:'🌙', name:'Sole di mezzanotte', desc:'Diario scritto dopo le 23' },
+  { id:'leggenda',  icon:'👑', name:'Leggenda norrena',   desc:'Tutti e 15 i giorni completati' }
+];
+
+/* ---------- Preset spese (NOK) ---------- */
+
+NQ.PRESETS = [
+  ['⛽','Pieno gasolio 60L', 1344, 'carburante'],
+  ['🏕','Notte in campeggio', 350, 'campeggio'],
+  ['🛒','Spesa supermercato', 600, 'cibo'],
+  ['🍺','Birra al pub', 120, 'cibo'],
+  ['🍽','Cena fuori', 400, 'cibo'],
+  ['⛴','Traghetto van', 400, 'traghetti'],
+  ['🛣','Pedaggio', 150, 'traghetti'],
+  ['🅿️','Parcheggio Trolltunga P2', 220, 'attivita'],
+  ['🚌','Navetta Mågelitopp', 150, 'attivita'],
+  ['🅿️','Parcheggio Preikestolen', 275, 'attivita'],
+  ['🅿️','Parcheggio Kjerag', 300, 'attivita'],
+  ['⛵','Battello Geirangerfjord', 610, 'attivita'],
+  ['🚂','Flåmsbana a/r', 730, 'attivita']
+];
+
+/* Ordine e colori sono fissi e non vanno rimescolati: l'identità di una
+   categoria è il suo colore. La sequenza passa i controlli di distinguibilità
+   per daltonismo sulla superficie scura della pagina (#16283d) —
+   la coppia peggiore resta a ΔE 8.4, sopra la soglia di 8. */
+NQ.CATS = {
+  carburante:{ icon:'⛽', name:'Carburante', color:'#3987e5' },
+  campeggio: { icon:'🏕', name:'Campeggi',   color:'#d95926' },
+  cibo:      { icon:'🍔', name:'Cibo',       color:'#199e70' },
+  traghetti: { icon:'⛴', name:'Traghetti e pedaggi', color:'#c98500' },
+  attivita:  { icon:'🥾', name:'Attività',   color:'#d55181' },
+  altro:     { icon:'🎁', name:'Altro',      color:'#008300' }
+};
+
+NQ.MOODS = ['😖','😐','🙂','😄','🤩'];
+NQ.WEATHER = ['☀️','⛅','☁️','🌧','⛈','🌫','❄️'];
+
+NQ.TRIP = { start:'2026-08-01', end:'2026-08-15', rate:11.7 };
+
+window.NQ = NQ;
+
+
+/* ==== mapdata.js ============================================== */
+/* GENERATO DA tools/make-map.js — non modificare a mano.
+   Coste e laghi reali: Natural Earth 10m (dominio pubblico).
+   Bitmap di bit impacchettati, 180x251, circa 2 km per tile. */
+
+NQ.MAPDATA = {
+  cols: 180, rows: 251,
+  lon0: 4.6, lon1: 11.15, lat0: 57.85, lat1: 62.4,
+  land: 'AAAAADwAO/5///////////////////AAAAAHwAe/x///////////////////AAAAYn8Hf/7///////////////////AAAAbj8ff/7///////////////////AAAAAD7/v/9///////////////////AAAAAD3/v/+f//////////////////AAAAPjv/n/+AH/////////////////AAADP6f/z//eZ/////////////////AAADf4f/7//f9/////////////////AAAAH4P/9//f//////////////////AAEAfw7/9//f//////////////////AAWABHf/+//f//////////////////AAfBx/P////f//////////////////AAfj//H//f+///////////////////AAPD+/T//f9///////////////////AAPj+/b/+/95//////////////////AABw//c///+P//////////////////AAA8H/cD//////////////////////AAAef+//f/////////////////////AAAOf9////////////////////////AAADf9////////////////////////AB4f//////////////////////////AB4f//////////////////////////AA4///////////////////////////AA3///////////////////////////AA////////////////////////////AAPwAD////////////////////////AAEHgB////////////////////////AfAP/f///j////////////////////Af4f/sD/+8f///////////////////A/2P/hgB++////////////////////AP0/8/r+F/////////////////////Afh///9/B/////////////////////BuP///+///////////////////////Awf///ff//////////////////////AAH///////////////////////////ADn///////////////////////////AD3///////////////////////////AT////////////////////////////A3////////////////////////////AX////////////////////////////AD////////////////////////////AAOP//////////////////////////AQAf//////////////////////////BwHz//////////////////////////AAA///////////////////////////AAAH//////////////////////////AAH///////////////////////////AEH///////////////////////////AAB///////////////////////////AAAb9v////////////////////////AACB7////////3////////////////AAP8P////////v////////////////AB///////////f////////////////ACf/////////+/////////////////ABf/////////t/////////////////AB//n////7//z/////////////////AB8H/////7//z/////////////////Agy/////////z/////////////////AADv/////3//n/////////////////MAfv////////n/////////////////AB/v/////v//n/////////////////AD//////8P//3/////////////////AB//////+f//3/////////////////AA//////+///3/f///////////////AAD/////+f//78////////////////AAB//3//8H//8P////////////////AU5///n/8Ae+Z/////////////////Adf//2PP8QB8D/////////////////B9h/8AAH8fj4D/////////////////B/j/gAAB4/zB7/////////////////B+APAb/wB/wf+/////////////////BsAGH//8H/+///////////////////JIcAZ3/9P/+///////////////////YA/A///7//+///////////////////cB/w////f//f//////////////////MB/+////f//f//////////////////AB/////////P//////////////////AA3///////+P//////////////////ABP////////3//////////////////Ahv////////7//////////////////Bjv////////9//////////////////Azv////////7//////////////////Abv8///////7//////////////////AL/wf/////////////////////////AD/3//////////////////////////AAPv//////////////////////////AAAH//////////////////////////ADA///////////////////////////EBg///////////////////////////EB4///////////////////////////AA8H+/////////////////////////AAPH//////////////////////////AAPj9/////////////////////////AAHjif////////////////////////AAH13f////////////////////////BALz3f////////////////////////BAF93f////////////////////////BgH+Pf////////////////////////BgD8/f////////////////////////AAB5//////+///////////////////AAAj//////8///////////////////ASAP//////5///////////////////AbAX/f////7///////////////////AZw7/f///3wH//////////////////AAc5/f///vGP//////////////////AAc98//v/e////////////////////AAO+9//v+d////////////////////ACO/B///xZ////////////////////ACM////3Hz////////////////////ACAf///+Hz////////////////////ADH//f/ofv////////////////////ADH/+//A/v////////////////////ADn/9//g/P////////////////////ABh/5//h/f////////////////////AAz/7//H/f////////////////////AHn/7//v/f////////////////////AHg/3//v+/////////////////////ADwfz/xf+/////////////////////ADw/0/wf+/////////////////////AAxnj/w/+/////////////////////AAQPPPh/+/////////////////////AAAPGfB///////////////////////AAAeO/B7//////////////////////AAACEcBz//////////////////////AAgAAeBz9/////////////////////AABAA+AP//////////////////////AABAAWB///////////////////////AADgCOD///////////////////////AACge+H///////////////////////AADh++P///////////////////////AABh+0P///////////////////////AAOH+Qf///////////////////////AAOH8AP///////////////////////AAAb8AP///////////////////////AAAc8H////////////////////////AAA+8P////////////////////////AAA+Qf/////////////////////+//AAA/Af/////////////////////4f/AAI/Af/////////////////////Af/AAMfNf/////////////////////Af/AAEfgf/z///////////////////Gf/AAOfgPfv///////////////////Gf/AAffgPef///////////////////Gf/AAfrAGc////////////////////P//AAPmAAZ////////////////////P//AAAQAAn////////////////////P//AAEQAH///////////////////+fP//AAERgH///////////////////+HP//AAMjgP////////////////////nn//AAIDsN////////////////////z3//AAMDvn////////////////////7///AAMNPv/9//////////////////77//AAEdfv////////////////////77//AAEfP//7//////////////////77//AAA/P//7//////////////////77//AAA/P//7x/////////////////7z//AAB+f//+f////////////////+bz//AAA8/z/x//////////////////Dj//AAD9/7/3//////////////////gB//AAD//5+v//////////////////wD//AAD//4Av//////////////////wH//AAD//wPP//////////////////4F//AAD//B+P//////////////////+H//AAB/+52////////////////////D//AAC3/9z///////////////////+B//AAC178z///////////////////+D//AADV7+n///////////////////+D//AADF78H///////////////////+B//AADl5ABX///////////////////Bf/AQDlzAAd///////////////////BP/AABhwAJ7///////////////////Af/AADwAAen///////////////////Af/AADwAAef//////////////////yAf/AADyAAY///////////////////wAP/AAD2AAB///////////////////wAP/AADnAAD///////////////////gAP/AADjAGD///////////////////gAFfAADgAOH///////////////////gAFNAABAAMA///////////////////gABHAAAAGAH///////////////////AAAAAAAADw////////////////8///AABAAAAAAx////////////////+f/9AAGAAAAAAB/////////////////f/9iACsAAAAAB///P/////////////X/9AAAsAAAAAA//h//////////////h/mAAAoAAAAMAX+P//////////////4+MAAABAAAAOADx///////////////4+AAAABAAAAHAPP///////////////g+AAAAAAAAAPgO////////////////x8AAAABAAAAHHP////////////////AAAAAABAAAALfl////////////////AAAAAAAAAAAPfn///////////////4AAAAAAIAAAAHfz//////////////+AAAAAAAMAAAAP/5///////////////AAAAAAAMAAAAP/8//////////////4AAAAAAAAAAAAP////////////////zgAAAAAAAAAAAP/////////////////gAAAAAAAAAAAP////////////////+AAAAAAAAAAAAf////////////////+AAAAAAAAAAAAf////////////////+AAAAAAAAAAAA/////////////////8AAAAAAAAAAAAf///////////////6AAAAAAAAAAAAAf////////////////gAAAAAAAAAAAAf////////////////AAAAAAAAAAAAAP////////////////AAAAAAAAAAAAAP////////////////AAAAAAAAAAAAAH///////////////+AAAAAAAAAAAAAH///////////////8AAAAAAAAAAAAAD///////////////wAAAAAAAAAAAAAD//////////////+AAAAAAAAAAAAAAB//////////////+AAAAAAAAAAAAAAB///////////////AAAAAAAAAAAAAAA//////////////+AAAAAAAAAAAAAAAH/////////////+AAAAAAAAAAAAAAAH/////////////8AAAAAAAAAAAAAAAAf////////////4AAAAAAAAAAAAAAAAP////////////wAAAAAAAAAAAAAAAAP////////////gAAAAAAAAAAAAAAAAP////////////AAAAAAAAAAAAAAAAAP////////////AAAAAAAAAAAAAAAAAH///////////+AAAAAAAAAAAAAAAAAB///////////4AAAAAAAAAAAAAAAAAA///////////4AAAAAAAAAAAAAAAAAAP//////////gAAAAAAAAAAAAAAAAAAD/z////////AAAAAAAAAAAAAAAAAAAB/7////////AAAAAAAAAAAAAAAAAAAAf/////////AAAAAAAAAAAAAAAAAAAAB/f//////4AAAAAAAAAAAAAAAAAAAABF///////gAAAAAAAAAAAAAAAAAAAABz///////AAAAAAAAAAAAAAAAAAAAAA3/////98AAAAAAAAAAAAAAAAAAAAAAH/////9+AAAAAAAAAAAAAAAAAAAAAAff////98AAAAAAAAAAAAAAAAAAAAAA/P////98AAAAAAAAAAAAAAAAAAAAAA/h////7wAAAAAAAAAAAAAAAAAAAAAB8P////xgAAAAAAAAAAAAAAAAAAAAAA+e7///wAAAAAAAAAAAAAAAAAAAAAAAfBz//+AAAAAAAAAAAAAAAAAAAAAAAAAFP//AAAAAAAAAAAAAAAAAAAAAAAAAAA4f+AAAAAAAAAAAAAAAAAAAAAAAAAAAwD8AAAAAAAAAAAAAAAAAAAAAAAAAAAwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=',
+  lake: 'AAAAAAAAAAAAAAAAAAYAAAAAAAAABgAAAAAAAAAAAAAAAAAAIAAAAAAAAADAAAAAAAAAAAAAAAAAAAEAAAAAAAAACAAAAAAAAAAAAAAAAAAACAAAAAAAAAEAAAAAAAAAAAAAAAAAAACAAAAAAAAAEAAAAAAAAAAAAAAAAAAACAAAAAAAAAIAAAAAAAAAAAAAAAAAAABAAAAAAAABwAAAAAAAAAAAAAAAAAAAAgAAAAAAACAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAAAAAAAAAAAAAAAAAAGAAAAAAAAACAEAAAAAAAAAAAAAAAAABgAAAAAAAAGALAAAAAAAAAAAAAAAAAAYAAAAAAAAEAIAAAAAAAAAAAAAAAAAAEAAAAAAAAEAIAAAAAAAAAAAAAAAAAACAAAAAAAAEAIAAAAAAAAAAAAAAAAAADfwAAAAAAEAMAAAAAAAAAAAAAAAAAAAgYAAAAAAEAMAAAAAAAAAAAAAAAAAAAAMAAAAAAEAIAAAAAAAAAAAAAAAAAAAAGAAAAAAHAEAAAAAAAAAAAAAAAAAAAADAAAAAABAEAAAAAAAAAAAAAAAAAAAABAAAAAABgEAAAAAAAAAAAAB+AAAAAAAgAAAAAAwCAAAAAAAAAAAAAB/AAAAAAwAAAAAAMCAAAAAAAAAAAAAABgAAAAAQAAAAAAGCAAAAAAAAcAAAAAAgAAAAAYAAAAAACCAAAAAAAA4ABAAAAcAAAAAMAAAAAACCAAAAAAAHgAIwAAAHwAAAAGAAAAAACCAAAAAAA8AAAYAAAAMAAAADAAAAAACCAAAAAAAAAAAAAAAAH4AAABgAAAAACCAAAAAAAAAAAAAAAAAOAADggAAAAACCAAAAAAAAAAAAAAAAABf/8wwAAAAABCAAAAAAAAAAAAAAAAAAwAAYQAAAAACBAAAAAAAAAAAAAAAAAAAAAIQAAAAAGBAAAAAAAAAAAAAAAAAAAAAOMAAAAAEBAAAAAAAAAAAAAAAAAAAAAD0AAAAAEBAAAAAAAAAAAAAAAAAAAAAAMAAAAAMAAAAAAAABAAAAAAAAAAAAAAEAAAAAIAAAAAAAAAgAAAAAAAAAAAAAEAAAAAIAAAAAAAAAQAAAAAAAAAAAAAEAAAAAGAAAAAAAAAQAAAAAAAAAAAAAEAAAAACAAAAAAAAAQAAAAAAAAAAAAAEQAAAACAAAAAAAAAAAAAAAAAAAAAAAD4AAAACAAAAAAAAAIAAAAAAAAAAAAAAIAAAACAAAAAAAAAAAAAAAAAAAAAAAAMAAAADAAAAAAAAAAAAAAAAAAAAAAAAEAAAABgAAAAAAAAAAAAAAAAAAAAAAADgAAAAQAAAAAAAAAAAAAAAAAAAAAAAA4AAAAYAAAAAAAA0AAAAAAAAAAAAAAAPwAAAIAAAAAAABBAAAAAAAAAAAAAAAAYAAAIAAAAAAAYAAAAAAAAAAAAAAAAAIAAAIAAAAAAAAAAAAAAAAAAAAAAAAAEAAAIAAAAAAAAAAAAAAAAAAAAAAAAAEAAAIAAAAAAAAAAAAAAAAAAAAAAAAAEAAAIAAAAAAAAAAAAAAAAAAAAAAAAAEAAAIAAAAAAAAAAAAAAAAAAAAAAAAAGAAAEAAAAAAAAAAAAAAAAAAAAAAAAACAAADAAAAAAAAAAAAAAAAAAAAAAAAADAAABAAAAAAAAAAAAAAAAAQAAAAAAABAAAAAAAAAAAAAAAAAAAACH4AAAAAABgAAAAAAAAAAAAAAAAAAACAHIwAAAAAgAAAAAAAAAAAAAAAAAAAGAAngAAAAAgAAAAAAAAAAAAAAAAAAAMAAAAAAAAAgAAAAAAAAAAAAAAAAAAAEAAAAAAAAA8AAAAAAAAAAAAAAAAAAAEAAAAAAAAACAAAAAAAAAAAAAAAAAAAEAAAAAAAAACAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGAAAAAAAAAAAAAAAAAAADwAAAAAAAAEAAAAAAAAAAAAAAAAAAAGYAAAAAAAAEAAAAAAAAAAAAAAAAAAAEOAAAAAAAAEAAAAAAAAAAAAAAAAAAAEB/wAAAAAAEAAAAAAAAAAAAAAAAAAAGAAeAAAAAAEAAAAAAAAAAAAAAAAAAACAADAAAAAAGAAAAAAAAAAAAAAAAAAAAAABgAAAAACAAAAAAAAAAAAAAAAAAAAAAAwAAAAACAAAAAAAAAAAAAAAAAAAAAAAQAAAAACAAAAAAAAAAAAAAAAAAAAAAAIAAAAACAAAAAAAAAAAAAAAAAAAAAAAMAAAAADAAAAAAAAAAAAAAAAAAAAAAAEAAAAABAAAAAAAAAAAAAAAAAAAAAAACAAAAAAwAAAAAAAAAAAAAAAAAAAAAAB4AAAAAYAAAAAAAAAAAAAAAAAAAAAAAGAAAAAMAAAAAAAAAAAAAAAAAAAAAAACAAAAAEAAAAAAAAAAAAAAAAAAAAAAABAAAAACAAAAAAAAAAAAAAAAAAAAAAAAwAAAADAAAAAAAAAAAAAAAAAAAAAAAAQAAAABCAAAAAAAAAAAAAAAAAAAAAAAIAAAABhAAAAAAAAAAAAAAAAAAAAAAAMAAAABBAAAAAAAAAAAAAAAAAAAAAAAGAAAABBwAAAAAAAAAAAAAAAcAAAAAACAAAABAwAAAAAAAAAAAAAAAEAAAAAABgACABgYAAAAAAAAAAAAAAAGAAAAAAAwAAAAwcAAAAAAAAAAAAAAAGAAAAAAAYAAAAf8AAAAAAAAAAAAAAABgAAAAAAIABAAP8AAAAAAAAAAAAAAEAAAAAAAAIAAgAD8AAAAAAAAAAAAAABAAAADgAAEAAwAB+AAAAAAAAAAAAAABgAAAcQAAEAAQAA+AAAAAAAAAAAAAAAgAADgYAAHAAQAAeAAAAAAAAAAAAAAAAAAcAIAAAwAAAAHAAAAAAAAAAAAGAAAAAwAIAAAYAAAADAAAAAAAAAAAADgAAADAAMAAAMAQAABAAAAAAAAAAAAA4AAA+AAEAAAGAQAABAAAAAAAAAAAAAGAABAAACAAACAAAAAAAAAAAAAAAAAAB4ADAAACAAAGAgAAAAAAAAAAAAAAAAAIAOAAABAAABgAAAAAAAAAAAAAAAAAAHAwAAABAAAAgYAAAAAAAAAAAAAAAAAA5gAAABgAABgEAAAAAAAAAAAAAAAAAAGAAAAAwAABAGAAAAAAAAAAAAAAAAAAAAAAAAYAABAGAAAAAAAAAAAAAAAAAAAAAPgAEwABgGAAAAAAAAAAAAAAAAAAAAB48ADYAAgGAAAAAAAAAAAAAAAAAAAA/AEAAIAAgEAAEAAAAAAAAAAAAAAAADAAEAAGAAgMAAEAAAAAAAAAAAAAAAAcAAEAABgAgMAAIAAAAAAAAAAAAAAAAgAAEAAAgAgMAAMAAAAAAAAAAAAAAABAAAGAAAgAQIAAGAAAAAAAAAAAAAAACAAADAAAwAYIAACAAAAAAAAAAAAAAAGAAABAAAQAMIAACAAAAAAAAAAAAAAAEAAAAgAAQAEMAAAAAAAAAAAAAAAIAAIAAAAgAAwAEEAAAAAAAAAAAAAAAGAAYAAAAgAAgAEAAAAAAAAAAAAAAAACAAgAAAAQABAACAAAAAAAAAAAAAAAABABgAAAAQABAACAAAAAAAAAAAAAAAABgDAAAAAQABAABAAAAAAAAAAAAAAAAA9+AIAAAQABwABAAAAAAAAAAAAAAAAAHYAEAAAQAAcABAAAAAAAAAAAAAAAAAAAAEAAAQAACACAAAAAAAAAAAAAAAYAAAACAAAIAACAGAAAAAAAAAAAAAAAMAAAAAAAAMAADAMQAAAAAAAAAAAAAAH/AAAAAAAGAABAYgAAAAAAAAAAAAAAAAwAADgAACAABgYgAAAAAAAAAAAAAAAAMAAEgAABgAAg7AAAAAAAAAAAAAAAAAH/gAgAAAQAAh/AAAAAAAAAAAAAAAAAAAwBgAAAIAAxuAAAAAAAAAAAAAAAAAAAIAAAAAIAATHAAAAAAAAAAAAAAAAAAAMAAAYAEAAKBAAAAAAAAAAAAAAAAAAAGAAAIAGAAOAAAAEAAAAAAAAAAAAAAADAAA8ACAAMAgAAGAAAAAAAAAAAAAAACAABkACAAIAgAADAAAAAAAAAAAAAAACAACCACAAIAgAABAAAAAAAAAAAAAAACAB8DABAAYAAAABAAAAAAAAAAAAAcADwHABAAwAQAAAABAAAAAAAAAAAAAOADsMABgAcAQAAAABAAAAAAAAAAAAAEABnwAAwAGAQAAAAAAAAAAAAAAAAAAAAAgAAAQACAQAAAAAAAAAAAAAAAAAAAAAAAAAQACAQAAAAAAAAAAAAAAAAAAAAAIAAAQACANwAAAAAAAAAAAAAAAAAAAAAAAAQACAHMAAAAAAAAAAAAAAAAAAAAAAAAQABAACAAAAAAAAAAAAAAAAAABAAAAAQABAAAAAAAAAAAAAAAAAAAAAAcAAAAMABhgAAAAAAAAAAAAAAAAAAAAEAAAAHAAgQAAAAAAAAAAAAAAAAAAAAAAAAAAgAgYAAAAAAAAAAAAAAAAAAAAAAAAAAQAgMAAAAAAAAAAAAAAAAAAAAAAAAAAQAQEAAAAAAAAAAAAAAAAAAAAAAAAAAIAYCAAAABAAAAAAAAADAAAAAAAAAAAIAGAAAAADAAAAAAAAAEAAAAAAAAAAAIADAAAAACAAAAAAAAAIAAAAAAAAAAAIABAAAAACAAAAAAAAAQAAAAAAAAAAAIABAAAAABAAAAAAAAAAAAAAAAAAAAAEAAgAAAAAAAAAEAAAAAAAAAAAAAAAAEAAcAAAAAAAAAMAAAAAAAAAAAAAAAAEAAGAAAAAAAAAMAAAAAAAAAAAAAAAAEAACAAAAAAAAAwAAAAAAAAAAAAAAAAEAACAAAAAAAAAAAAAAAIAAAAAgAAAAEAACAAACAAAAAAAAAAAMAAJ4AOAAAAMAAGAAACAAAAAAAAAAAcAAPOAA4AAAYAAEAAAGAAAAAAAAAAAOAAAD+AAAAAwAAIAAAHBAAAAAAAAAAGAAAAD/AAAAwAAIAAAAAAAAAAAAAAAGAAAAAB8AAAYAAQAAAANAAAAAAAAAACAAAAAAGAQAIAAQAAAANAAAAAAAAAAAAAAAAADBcAMAAQAAAAFAAAAAAAAAAAAAAAAABAAAHAAIAAAABAAAAAAAAAAAAAAAAABAAABgAIAAAAHAAAAAAAAAAAAAAAAADAAAAgAMAAAAMAAAAAAAAAAAAAAAAACAAAAwAEAAAAYAAAAAAAAAAAgAAAAACAAAAYAkAAAAQAAAAAAAAAADAAAAAADAAAAPACAAAAgAAAAAAAAAACAAAABACAAAAAgSAAAAAAAAAAAAAAAIAAAABACAAAAAgBAAAAAAAAAAAAAAAAAAAABACAAAAAgJgAAAAAAAAAAAAAAADAAAAgBAAAAAgEgAAAAAAAAAAAAAAACAAAAQBAAAAAAAgAAAAAAAAAAAAAAADAAAAMBAAAAAACgAAAAAAAAAAAAAAAGAAAAEBAAAAAAAgAAAAAAAAAAAAAAAAAAAACDAAAAAAAgAAAAAAAAAAAAAAAAAAAACDAAA8AAAgAAAAAAAAAAAAAAAAAAAAAAgAACAAAAAAAAAAAAAAAAAAAAAAAAAAgAAQAAAAAAAAAAAAAAAAAAAAAAAAABgAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAQAABAAAAAAAAAAAAAAAAAAAAAAAAAAQAABgAAAAAAAAAAAAAAAAAAAAAAAAAQAAAgAAAAAAAAAAAAAAAAAAAAAAAAAQAAAwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAEAAAgAAAAAAAAAAAAAAAAAAAAAAAAAEAABAAAAAAAAAAAAAAAAAAAAAAAAAAEAABAAAAAAAAAAAAAAAAAAAAAAAAAACAADAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAAAAAAAAAAAAAAAAAAAAAAAAACAADAAAAAAAAAAAAAAAAAAAAAAAAAACAABgAAAAAAAAAAAAAAAAAAAAAAAAAGAAAwAAAAAAAAAAAAAAAAAAAAAAAAAEAAAYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAEAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIAAAAAAAAAAAAAAAAAAAAgAAAAAAAALAAAAAAAAAAAAAAAAAAAAgAAAAAAAAMAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA='
+};
+
+
+/* ==== engine.js =============================================== */
+/* ============================================================
+   NORGE QUEST — ENGINE
+   Font bitmap, sprite, effemeridi solari, storage, audio chiptune.
+   Nessuna dipendenza esterna: tutto sintetizzato o calcolato.
+   ============================================================ */
+
+(function(){
+'use strict';
+
+/* ---------- helper ---------- */
+
+function $(s,r){ return (r||document).querySelector(s); }
+function $$(s,r){ return Array.prototype.slice.call((r||document).querySelectorAll(s)); }
+function esc(s){
+  return String(s==null?'':s).replace(/[&<>"']/g,function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+  });
+}
+function pad2(n){ return (n<10?'0':'')+n; }
+function nok(n){ return Math.round(n).toLocaleString('it-IT'); }
+function eur(n,rate){ return (n/rate).toFixed(0); }
+function hm(min){
+  var h=Math.floor(min/60), m=Math.round(min%60);
+  return h? h+'h'+(m? ' '+pad2(m):'') : m+'m';
+}
+function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+
+NQ.$=$; NQ.$$=$$; NQ.esc=esc; NQ.pad2=pad2; NQ.nok=nok; NQ.eur=eur; NQ.hm=hm; NQ.uid=uid;
+
+/* ---------- data odierna (override ?today=YYYY-MM-DD per il test) ---------- */
+
+NQ.today = (function(){
+  var q=new URLSearchParams(location.search).get('today');
+  if(q && /^\d{4}-\d{2}-\d{2}$/.test(q)) return q;
+  var d=new Date();
+  return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate());
+})();
+
+NQ.dayIndex = function(){
+  for(var i=0;i<NQ.DAYS.length;i++) if(NQ.DAYS[i].date===NQ.today) return i;
+  return -1;
+};
+NQ.phase = function(){
+  if(NQ.today < NQ.TRIP.start) return 'pre';
+  if(NQ.today > NQ.TRIP.end)   return 'post';
+  return 'live';
+};
+NQ.daysTo = function(target){
+  var a=new Date(NQ.today+'T00:00:00Z'), b=new Date(target+'T00:00:00Z');
+  return Math.round((b-a)/86400000);
+};
+
+/* ============================================================
+   FONT BITMAP 5x7 — per i titoli disegnati su canvas
+   ============================================================ */
+
+var FONT = {
+  'A':['.###.','#...#','#...#','#####','#...#','#...#','#...#'],
+  'B':['####.','#...#','#...#','####.','#...#','#...#','####.'],
+  'C':['.####','#....','#....','#....','#....','#....','.####'],
+  'D':['####.','#...#','#...#','#...#','#...#','#...#','####.'],
+  'E':['#####','#....','#....','####.','#....','#....','#####'],
+  'F':['#####','#....','#....','####.','#....','#....','#....'],
+  'G':['.####','#....','#....','#..##','#...#','#...#','.####'],
+  'H':['#...#','#...#','#...#','#####','#...#','#...#','#...#'],
+  'I':['#####','..#..','..#..','..#..','..#..','..#..','#####'],
+  'J':['..###','...#.','...#.','...#.','...#.','#..#.','.##..'],
+  'K':['#...#','#..#.','#.#..','##...','#.#..','#..#.','#...#'],
+  'L':['#....','#....','#....','#....','#....','#....','#####'],
+  'M':['#...#','##.##','#.#.#','#...#','#...#','#...#','#...#'],
+  'N':['#...#','##..#','#.#.#','#..##','#...#','#...#','#...#'],
+  'O':['.###.','#...#','#...#','#...#','#...#','#...#','.###.'],
+  'P':['####.','#...#','#...#','####.','#....','#....','#....'],
+  'Q':['.###.','#...#','#...#','#...#','#.#.#','#..#.','.##.#'],
+  'R':['####.','#...#','#...#','####.','#.#..','#..#.','#...#'],
+  'S':['.####','#....','#....','.###.','....#','....#','####.'],
+  'T':['#####','..#..','..#..','..#..','..#..','..#..','..#..'],
+  'U':['#...#','#...#','#...#','#...#','#...#','#...#','.###.'],
+  'V':['#...#','#...#','#...#','#...#','#...#','.#.#.','..#..'],
+  'W':['#...#','#...#','#...#','#...#','#.#.#','##.##','#...#'],
+  'X':['#...#','#...#','.#.#.','..#..','.#.#.','#...#','#...#'],
+  'Y':['#...#','#...#','.#.#.','..#..','..#..','..#..','..#..'],
+  'Z':['#####','....#','...#.','..#..','.#...','#....','#####'],
+  '0':['.###.','#...#','#..##','#.#.#','##..#','#...#','.###.'],
+  '1':['..#..','.##..','..#..','..#..','..#..','..#..','.###.'],
+  '2':['.###.','#...#','....#','...#.','..#..','.#...','#####'],
+  '3':['####.','....#','....#','.###.','....#','....#','####.'],
+  '4':['#..#.','#..#.','#..#.','#####','...#.','...#.','...#.'],
+  '5':['#####','#....','#....','####.','....#','#...#','.###.'],
+  '6':['.###.','#....','#....','####.','#...#','#...#','.###.'],
+  '7':['#####','....#','...#.','..#..','.#...','.#...','.#...'],
+  '8':['.###.','#...#','#...#','.###.','#...#','#...#','.###.'],
+  '9':['.###.','#...#','#...#','.####','....#','....#','.###.'],
+  ' ':['.....','.....','.....','.....','.....','.....','.....'],
+  '-':['.....','.....','.....','#####','.....','.....','.....'],
+  '.':['.....','.....','.....','.....','.....','.....','..#..'],
+  ':':['.....','..#..','..#..','.....','..#..','..#..','.....'],
+  '!':['..#..','..#..','..#..','..#..','..#..','.....','..#..'],
+  '/':['....#','....#','...#.','..#..','.#...','#....','#....']
+};
+
+/* Disegna testo bitmap. Ritorna la larghezza in pixel logici. */
+NQ.drawText = function(ctx,text,x,y,px,color,shadow){
+  text=String(text).toUpperCase();
+  var cx=x;
+  for(var i=0;i<text.length;i++){
+    var g=FONT[text[i]] || FONT[' '];
+    for(var r=0;r<7;r++) for(var c=0;c<5;c++){
+      if(g[r][c]!=='#') continue;
+      if(shadow){
+        ctx.fillStyle=shadow;
+        ctx.fillRect(cx+c*px, y+r*px+px, px, px);
+      }
+      ctx.fillStyle=color;
+      ctx.fillRect(cx+c*px, y+r*px, px, px);
+    }
+    cx += 6*px;
+  }
+  return cx-x;
+};
+NQ.textWidth = function(text,px){ return String(text).length*6*px - px; };
+
+/* ============================================================
+   SPRITE — griglie di pixel, 0 = trasparente
+   ============================================================ */
+
+var SP = {
+  /* van 13x9 */
+  van:{
+    pal:[null,'#1b1b22','#e8e8ee','#e8544b','#4a9de8','#f5c542','#8c97a8'],
+    g:[
+      '0001111111100',
+      '0014444444110',
+      '0144444444410',
+      '1333333333331',
+      '1322222222231',
+      '1333333333331',
+      '1611111111161',
+      '0161000000610',
+      '0011000000110'
+    ]
+  },
+  /* troll 9x10 */
+  troll:{
+    pal:[null,'#2f2118','#6b8f4a','#8fbf5e','#f5c542','#1b1b22','#c26a3a'],
+    g:[
+      '003333000',
+      '032222300',
+      '325252230',
+      '322222230',
+      '032666300',
+      '003333000',
+      '033333330',
+      '030333030',
+      '030000030',
+      '011000110'
+    ]
+  },
+  /* bandierina traguardo 7x9 */
+  flag:{
+    pal:[null,'#8c97a8','#e8544b','#dbe9f7'],
+    g:['1222220','1233320','1222220','1233320','1000000','1000000','1000000','1000000','1000000']
+  }
+};
+NQ.SPRITES = SP;
+
+NQ.drawSprite = function(ctx,name,x,y,px,flip){
+  var s=SP[name]; if(!s) return;
+  var w=s.g[0].length;
+  for(var r=0;r<s.g.length;r++) for(var c=0;c<w;c++){
+    var v=+s.g[r][c]; if(!v) continue;
+    var col=s.pal[v]; if(!col) continue;
+    ctx.fillStyle=col;
+    ctx.fillRect(x+(flip? (w-1-c):c)*px, y+r*px, px, px);
+  }
+};
+
+/* ============================================================
+   EFFEMERIDI SOLARI (NOAA semplificato)
+   Precisione ~±5 minuti: sufficiente per pianificare un trekking.
+   Norvegia ad agosto = CEST, UTC+2.
+   ============================================================ */
+
+NQ.sun = function(dateStr, lat, lon, tzHours){
+  tzHours = (tzHours==null)? 2 : tzHours;
+  var d = new Date(dateStr+'T12:00:00Z');
+  var start = new Date(Date.UTC(d.getUTCFullYear(),0,1));
+  var N = Math.floor((d-start)/86400000)+1;
+
+  var g = 2*Math.PI/365*(N-1);
+  var cg=Math.cos(g), sg=Math.sin(g),
+      c2=Math.cos(2*g), s2=Math.sin(2*g),
+      c3=Math.cos(3*g), s3=Math.sin(3*g);
+
+  var eq = 229.18*(0.000075 + 0.001868*cg - 0.032077*sg - 0.014615*c2 - 0.040849*s2);
+  var decl = 0.006918 - 0.399912*cg + 0.070257*sg - 0.006758*c2 + 0.000907*s2
+             - 0.002697*c3 + 0.00148*s3;
+
+  var latR = lat*Math.PI/180;
+  var z = 90.833*Math.PI/180;
+  var cosH = Math.cos(z)/(Math.cos(latR)*Math.cos(decl)) - Math.tan(latR)*Math.tan(decl);
+
+  if(cosH >  1) return { polar:'notte', rise:null, set:null, light:0 };  // sole sempre sotto
+  if(cosH < -1) return { polar:'giorno', rise:null, set:null, light:1440 }; // sole di mezzanotte
+
+  var ha = Math.acos(cosH)*180/Math.PI;
+  var riseUTC = 720 - 4*(lon + ha) - eq;
+  var setUTC  = 720 - 4*(lon - ha) - eq;
+  var off = tzHours*60;
+
+  /* arrotondare i minuti prima di dividere: altrimenti 04:59.7 diventa "04:60" */
+  function fmt(m){
+    m = Math.round(m) % 1440;
+    if(m<0) m += 1440;
+    return pad2(Math.floor(m/60))+':'+pad2(m%60);
+  }
+  return {
+    polar:null,
+    rise: fmt(riseUTC+off),
+    set:  fmt(setUTC+off),
+    light: Math.round(setUTC-riseUTC)
+  };
+};
+
+/* ============================================================
+   STORAGE
+   localStorage: testo e numeri (leggero, esportabile)
+   IndexedDB:    foto (i blob non stanno in localStorage)
+   ============================================================ */
+
+var KEY='norgequest.v1';
+
+var Store = {
+  d:null,
+
+  blank:function(){
+    return { v:2, done:{}, journal:{}, exp:[], photos:[], trophies:{},
+             people:[{id:'p1',name:'Io'},{id:'p2',name:'Compagno'}],
+             xp:0, rate:NQ.TRIP.rate, budget:null, mute:true, seen:false };
+  },
+
+  load:function(){
+    try{
+      var raw=localStorage.getItem(KEY);
+      this.d = raw? JSON.parse(raw) : this.blank();
+    }catch(e){ this.d=this.blank(); }
+
+    /* migrazione difensiva: se manca un campo, lo si ricrea */
+    var b=this.blank();
+    for(var k in b) if(!(k in this.d)) this.d[k]=b[k];
+    if(!this.d.people || !this.d.people.length) this.d.people=b.people;
+
+    /* v1 → v2: le spese non sapevano chi avesse pagato.
+       Vengono attribuite alla prima persona e divise fra tutti. */
+    var ids=this.d.people.map(function(p){ return p.id; });
+    this.d.exp.forEach(function(e){
+      if(!e.payer) e.payer=ids[0];
+      if(!e.split || !e.split.length) e.split=ids.slice();
+      if(e.day==null) e.day=1;
+    });
+    this.d.v=2;
+    return this.d;
+  },
+
+  save:function(){
+    try{ localStorage.setItem(KEY, JSON.stringify(this.d)); }
+    catch(e){ NQ.toast('Memoria piena','Il salvataggio non è riuscito. Esporta il diario per liberare spazio.'); }
+  },
+
+  reset:function(){
+    this.d=this.blank(); this.save();
+    return Photos.clear();
+  }
+};
+NQ.store=Store;
+
+/* ---------- IndexedDB per le foto ---------- */
+
+var Photos = {
+  db:null,
+
+  open:function(){
+    var self=this;
+    if(self.db) return Promise.resolve(self.db);
+    return new Promise(function(res,rej){
+      if(!window.indexedDB) return rej(new Error('IndexedDB non disponibile'));
+      var rq=indexedDB.open('norgequest',1);
+      rq.onupgradeneeded=function(e){
+        var db=e.target.result;
+        if(!db.objectStoreNames.contains('photos'))
+          db.createObjectStore('photos',{keyPath:'id'});
+      };
+      rq.onsuccess=function(e){ self.db=e.target.result; res(self.db); };
+      rq.onerror=function(){ rej(rq.error); };
+    });
+  },
+
+  tx:function(mode){
+    return this.open().then(function(db){
+      return db.transaction('photos',mode).objectStore('photos');
+    });
+  },
+
+  put:function(rec){
+    return this.tx('readwrite').then(function(st){
+      return new Promise(function(res,rej){
+        var r=st.put(rec); r.onsuccess=function(){res(rec);}; r.onerror=function(){rej(r.error);};
+      });
+    });
+  },
+
+  get:function(id){
+    return this.tx('readonly').then(function(st){
+      return new Promise(function(res,rej){
+        var r=st.get(id); r.onsuccess=function(){res(r.result);}; r.onerror=function(){rej(r.error);};
+      });
+    });
+  },
+
+  all:function(){
+    return this.tx('readonly').then(function(st){
+      return new Promise(function(res,rej){
+        var out=[], r=st.openCursor();
+        r.onsuccess=function(e){
+          var c=e.target.result;
+          if(c){ out.push(c.value); c.continue(); } else res(out);
+        };
+        r.onerror=function(){ rej(r.error); };
+      });
+    });
+  },
+
+  del:function(id){
+    return this.tx('readwrite').then(function(st){
+      return new Promise(function(res,rej){
+        var r=st.delete(id); r.onsuccess=function(){res();}; r.onerror=function(){rej(r.error);};
+      });
+    });
+  },
+
+  clear:function(){
+    return this.tx('readwrite').then(function(st){
+      return new Promise(function(res,rej){
+        var r=st.clear(); r.onsuccess=function(){res();}; r.onerror=function(){rej(r.error);};
+      });
+    });
+  }
+};
+NQ.photos=Photos;
+
+/* Le foto vengono conservate come sono, a piena risoluzione: è l'originale
+   che finisce nell'album scaricabile. Quello che si genera qui è solo la
+   miniatura per la griglia del diario — caricare venti foto da 5 MB per
+   mostrarle a 90 pixel bloccherebbe il telefono. */
+NQ.makeThumb = function(file, max){
+  max = max||320;
+  return new Promise(function(res,rej){
+    var url=URL.createObjectURL(file);
+    var img=new Image();
+    img.onerror=function(){ URL.revokeObjectURL(url); rej(new Error('immagine non valida')); };
+    img.onload=function(){
+      var w=img.width, h=img.height, s=Math.min(1, max/Math.max(w,h));
+      var cv=document.createElement('canvas');
+      cv.width=Math.max(1,Math.round(w*s)); cv.height=Math.max(1,Math.round(h*s));
+      cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height);
+      URL.revokeObjectURL(url);
+      res({ thumb:cv.toDataURL('image/jpeg',0.7), w:w, h:h });
+    };
+    img.src=url;
+  });
+};
+
+/* Quanto spazio stanno occupando le foto, e quanto ne resta. */
+NQ.storageInfo = function(){
+  if(!navigator.storage || !navigator.storage.estimate) return Promise.resolve(null);
+  return navigator.storage.estimate().then(function(e){
+    return { used:e.usage||0, quota:e.quota||0 };
+  }).catch(function(){ return null; });
+};
+
+/* Senza questo il browser può buttare via IndexedDB quando lo spazio scarseggia.
+   Su quindici giorni di viaggio è una perdita che non si recupera. */
+NQ.persistStorage = function(){
+  if(!navigator.storage || !navigator.storage.persist) return Promise.resolve(false);
+  return navigator.storage.persisted().then(function(already){
+    return already? true : navigator.storage.persist();
+  }).catch(function(){ return false; });
+};
+
+/* ============================================================
+   AUDIO — chiptune originale, sintetizzato in Web Audio
+   2 canali pulse (duty variabile come sul DMG), 1 triangolo, 1 rumore.
+   Nessun file audio: le tracce sono array di note.
+   ============================================================ */
+
+var NOTE={C:0,'C#':1,D:2,'D#':3,E:4,F:5,'F#':6,G:7,'G#':8,A:9,'A#':10,B:11};
+function freq(n){
+  if(!n) return 0;
+  var m=/^([A-G]#?)(-?\d)$/.exec(n); if(!m) return 0;
+  var semi = NOTE[m[1]] + (+m[2]+1)*12;      // C4 = 60
+  return 440*Math.pow(2,(semi-69)/12);
+}
+/* espande [[nota,durata], ...] in un array di step */
+function expand(seq){
+  var out=[];
+  for(var i=0;i<seq.length;i++){
+    var n=seq[i][0], d=seq[i][1];
+    out.push(n);
+    for(var k=1;k<d;k++) out.push('-');   // '-' = tieni la nota
+  }
+  return out;
+}
+/* pattern di basso: per ogni accordo 8 step → root, ottava, quinta, ottava */
+function bassLine(chords){
+  var out=[];
+  chords.forEach(function(ch){
+    var r=ch[0], o=ch[1], f=ch[2];
+    out.push(r,'-',o,'-',f,'-',o,'-');
+  });
+  return out;
+}
+
+var TRACKS = {
+  /* ---- ROUTE: sulla mappa. Sol maggiore, in movimento ---- */
+  route:{
+    bpm:132, loop:true,
+    sq1: expand([['D5',2],['G5',2],['A5',2],['B5',2],['D6',4],['B5',2],['A5',2],
+                 ['G5',2],['A5',2],['B5',2],['G5',2],['E5',4],['D5',4],
+                 ['E5',2],['G5',2],['A5',2],['B5',2],['C6',4],['B5',2],['A5',2],
+                 ['G5',2],['F#5',2],['G5',2],['A5',2],['G5',8]]),
+    sq2: expand([['B4',4],['D5',4],['G5',4],['D5',4],
+                 ['B4',4],['D5',4],['B4',4],['B4',4],
+                 ['C5',4],['E5',4],['E5',4],['D5',4],
+                 ['B4',4],['C5',4],['B4',8]]),
+    tri: bassLine([['G2','G3','D3'],['D2','D3','A2'],['E2','E3','B2'],['C3','C4','G3'],
+                   ['G2','G3','D3'],['D2','D3','A2'],['C3','C4','G3'],['D2','D3','A2']]),
+    duty:[0.5,0.25]
+  },
+
+  /* ---- BOSS: sui trekking. Re minore, teso ---- */
+  boss:{
+    bpm:152, loop:true,
+    sq1: expand([['D5',2],['F5',2],['A5',2],['D6',2],['C6',4],['A5',4],
+                 ['A#5',2],['A5',2],['G5',2],['F5',2],['E5',4],['D5',4],
+                 ['D5',2],['F5',2],['A5',2],['C6',2],['A#5',4],['A5',4],
+                 ['G5',2],['F5',2],['E5',2],['F5',2],['D5',8]]),
+    sq2: expand([['D4',8],['F4',8],
+                 ['D4',8],['A4',8],
+                 ['D4',8],['F4',8],
+                 ['A#3',8],['A3',8]]),
+    tri: bassLine([['D2','D3','A2'],['D2','D3','A2'],['A#1','A#2','F2'],['C2','C3','G2'],
+                   ['D2','D3','A2'],['D2','D3','A2'],['G1','G2','D2'],['A1','A2','E2']]),
+    duty:[0.125,0.5]
+  },
+
+  /* ---- FANFARA: trofeo sbloccato. Una volta sola ---- */
+  fanfare:{
+    bpm:150, loop:false,
+    sq1: expand([['C5',2],['E5',2],['G5',2],['C6',2],['G5',2],['C6',8]]),
+    sq2: expand([['E4',2],['G4',2],['C5',2],['E5',2],['C5',2],['E5',8]]),
+    tri: expand([['C3',4],['G2',4],['C3',2],['C2',8]]),
+    duty:[0.25,0.5]
+  }
+};
+
+var Chip = {
+  ctx:null, master:null, waves:{}, noiseBuf:null,
+  track:null, step:0, next:0, timer:null, muted:true,
+
+  init:function(){
+    if(this.ctx) return true;
+    var AC = window.AudioContext || window.webkitAudioContext;
+    if(!AC) return false;
+    this.ctx = new AC();
+    this.master = this.ctx.createGain();
+    this.master.gain.value = 0.16;
+    this.master.connect(this.ctx.destination);
+
+    /* rumore bianco per la percussione */
+    var len = this.ctx.sampleRate*0.5;
+    this.noiseBuf = this.ctx.createBuffer(1,len,this.ctx.sampleRate);
+    var ch=this.noiseBuf.getChannelData(0);
+    for(var i=0;i<len;i++) ch[i]=Math.random()*2-1;
+    return true;
+  },
+
+  /* onda quadra a duty cycle arbitrario, via serie di Fourier */
+  wave:function(duty){
+    var k='d'+duty;
+    if(this.waves[k]) return this.waves[k];
+    var n=24, re=new Float32Array(n), im=new Float32Array(n);
+    for(var h=1;h<n;h++){
+      re[h]=0;
+      im[h]=(2/(h*Math.PI))*Math.sin(h*Math.PI*duty);
+    }
+    this.waves[k]=this.ctx.createPeriodicWave(re,im,{disableNormalization:false});
+    return this.waves[k];
+  },
+
+  tone:function(f,t,dur,duty,gain){
+    if(!f) return;
+    var o=this.ctx.createOscillator(), g=this.ctx.createGain();
+    if(duty===null) o.type='triangle';
+    else o.setPeriodicWave(this.wave(duty));
+    o.frequency.setValueAtTime(f,t);
+    g.gain.setValueAtTime(0,t);
+    g.gain.linearRampToValueAtTime(gain,t+0.006);
+    g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+    o.connect(g); g.connect(this.master);
+    o.start(t); o.stop(t+dur+0.02);
+  },
+
+  hit:function(t,low){
+    var s=this.ctx.createBufferSource(), g=this.ctx.createGain(), f=this.ctx.createBiquadFilter();
+    s.buffer=this.noiseBuf;
+    f.type = low? 'lowpass':'highpass';
+    f.frequency.value = low? 220 : 5200;
+    g.gain.setValueAtTime(low?0.5:0.14, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t+(low?0.13:0.035));
+    s.connect(f); f.connect(g); g.connect(this.master);
+    s.start(t); s.stop(t+0.2);
+  },
+
+  /* durata di una nota tenuta: conta quanti '-' seguono */
+  held:function(arr,i,spb){
+    var d=1;
+    while(arr[i+d]==='-') d++;
+    return d*spb*0.94;
+  },
+
+  schedule:function(){
+    var T=this.track; if(!T) return;
+    var spb = 60/T.bpm/4;                       // sedicesimi
+    var len = Math.max(T.sq1.length, T.tri.length);
+
+    while(this.next < this.ctx.currentTime + 0.18){
+      var i=this.step, t=this.next;
+
+      var a=T.sq1[i]; if(a && a!=='-') this.tone(freq(a),t,this.held(T.sq1,i,spb),T.duty[0],0.30);
+      var b=T.sq2[i]; if(b && b!=='-') this.tone(freq(b),t,this.held(T.sq2,i,spb),T.duty[1],0.16);
+      var c=T.tri[i]; if(c && c!=='-') this.tone(freq(c),t,this.held(T.tri,i,spb),null,0.42);
+      if(i%8===0)      this.hit(t,true);
+      else if(i%4===2) this.hit(t,false);
+
+      this.next += spb;
+      this.step++;
+      if(this.step>=len){
+        if(T.loop) this.step=0;
+        else { this.stop(); return; }
+      }
+    }
+  },
+
+  play:function(name){
+    if(this.muted) return;
+    if(!this.init()) return;
+    if(this.ctx.state==='suspended') this.ctx.resume();
+    if(this.track===TRACKS[name] && this.timer) return;   // già in esecuzione
+    this.stop();
+    this.track=TRACKS[name];
+    if(!this.track) return;
+    this.step=0;
+    this.next=this.ctx.currentTime+0.06;
+    var self=this;
+    this.timer=setInterval(function(){ self.schedule(); },25);
+    this.schedule();
+  },
+
+  /* jingle one-shot che non interrompe definitivamente la traccia di fondo */
+  sting:function(){
+    if(this.muted || !this.init()) return;
+    var back = this.trackName;
+    this.play('fanfare');
+    var self=this;
+    setTimeout(function(){ if(back && back!=='fanfare') self.play(back); }, 2600);
+  },
+
+  stop:function(){
+    if(this.timer){ clearInterval(this.timer); this.timer=null; }
+    this.track=null;
+  },
+
+  setMute:function(m){
+    this.muted=m;
+    if(m){ this.stop(); }
+    else if(this.trackName){ this.play(this.trackName); }
+  },
+
+  /* traccia "desiderata" dalla vista corrente, ripresa quando si toglie il mute */
+  want:function(name){
+    this.trackName=name;
+    if(!this.muted) this.play(name);
+  }
+};
+NQ.chip=Chip;
+/* usato dai test: i tre canali di una traccia devono avere la stessa
+   lunghezza, altrimenti il loop va fuori fase dopo il primo giro */
+NQ.chipDebug={ TRACKS:TRACKS, freq:freq };
+
+/* ============================================================
+   CONTI CONDIVISI
+   Chi ha anticipato quanto, quanto gli spetta, e il minor numero
+   di bonifici che pareggia tutto.
+   ============================================================ */
+
+/* Le divisioni in parti uguali lasciano resti di 1 corona. Vengono
+   distribuiti sui primi partecipanti invece di sparire: così la somma
+   delle quote è sempre esattamente il totale speso. */
+function shares(e){
+  var out={}, n=e.split.length;
+  if(!n) return out;
+  var base=Math.floor(e.nok/n), rest=e.nok-base*n;
+  e.split.forEach(function(id,i){ out[id]=base+(i<rest?1:0); });
+  return out;
+}
+
+NQ.balances=function(){
+  var s=NQ.store.d, paid={}, owed={};
+  s.people.forEach(function(p){ paid[p.id]=0; owed[p.id]=0; });
+
+  s.exp.forEach(function(e){
+    if(paid[e.payer]!=null) paid[e.payer]+=e.nok;
+    var sh=shares(e);
+    for(var id in sh) if(owed[id]!=null) owed[id]+=sh[id];
+  });
+
+  return s.people.map(function(p){
+    return { id:p.id, name:p.name, paid:paid[p.id], owed:owed[p.id],
+             net:paid[p.id]-owed[p.id] };
+  });
+};
+
+/* Abbinamento avido fra chi è in credito e chi è in debito:
+   con N persone servono al più N-1 passaggi di denaro. */
+NQ.settle=function(){
+  var bal=NQ.balances();
+  var cred=bal.filter(function(b){return b.net>0;})
+              .map(function(b){return {name:b.name, v:b.net};})
+              .sort(function(a,b){return b.v-a.v;});
+  var debt=bal.filter(function(b){return b.net<0;})
+              .map(function(b){return {name:b.name, v:-b.net};})
+              .sort(function(a,b){return b.v-a.v;});
+
+  var out=[], i=0, j=0, guard=0;
+  while(i<debt.length && j<cred.length && guard++<200){
+    var amt=Math.min(debt[i].v, cred[j].v);
+    if(amt>0.5) out.push({ from:debt[i].name, to:cred[j].name, nok:Math.round(amt) });
+    debt[i].v-=amt; cred[j].v-=amt;
+    if(debt[i].v<=0.5) i++;
+    if(cred[j].v<=0.5) j++;
+  }
+  return out;
+};
+
+/* ============================================================
+   TOAST + CONFETTI
+   ============================================================ */
+
+NQ.toast = function(title, msg, big){
+  var host=$('#toast'); if(!host) return;
+  var el=document.createElement('div');
+  el.className='toastmsg'+(big?' big':'');
+  el.innerHTML = (title? '<span class="tt">'+esc(title)+'</span>':'') + esc(msg);
+  host.appendChild(el);
+  setTimeout(function(){
+    el.style.transition='opacity .3s'; el.style.opacity='0';
+    setTimeout(function(){ el.remove(); },320);
+  }, big? 4200:2600);
+};
+
+NQ.confetti = function(){
+  if(window.matchMedia && matchMedia('(prefers-reduced-motion:reduce)').matches) return;
+  var cv=$('#confetti'); if(!cv) return;
+  var cx=cv.getContext('2d');
+  cv.width=innerWidth; cv.height=innerHeight; cv.style.display='block';
+  var cols=['#f5c542','#7fdb6a','#4a9de8','#e8544b','#a367d6','#ffffff'];
+  var bits=[];
+  for(var i=0;i<90;i++) bits.push({
+    x:Math.random()*cv.width, y:-Math.random()*cv.height*0.5,
+    vx:(Math.random()-0.5)*2.4, vy:2+Math.random()*3.2,
+    s:3+Math.floor(Math.random()*3)*3,
+    c:cols[Math.floor(Math.random()*cols.length)]
+  });
+  var t0=performance.now();
+  (function frame(now){
+    cx.clearRect(0,0,cv.width,cv.height);
+    bits.forEach(function(b){
+      b.x+=b.vx; b.y+=b.vy; b.vy+=0.045;
+      cx.fillStyle=b.c;
+      cx.fillRect(Math.round(b.x), Math.round(b.y), b.s, b.s);
+    });
+    if(now-t0 < 2600) requestAnimationFrame(frame);
+    else { cx.clearRect(0,0,cv.width,cv.height); cv.style.display='none'; }
+  })(t0);
+};
+
+/* ============================================================
+   XP E TROFEI
+   ============================================================ */
+
+/* Tarati sui 4.350 XP totali dell'itinerario: chi completa tutto
+   arriva a livello 11 esatto l'ultimo giorno. */
+NQ.LEVELS = [0,200,450,750,1100,1500,1950,2450,3000,3600,4250];
+
+NQ.level = function(xp){
+  var L=NQ.LEVELS, i=0;
+  while(i<L.length-1 && xp>=L[i+1]) i++;
+  var cur=L[i], nxt=L[i+1]!=null? L[i+1] : cur+1;
+  return { lv:i+1, cur:cur, next:L[i+1]!=null? nxt:null,
+           pct: L[i+1]!=null? Math.min(100,Math.round((xp-cur)/(nxt-cur)*100)) : 100 };
+};
+
+NQ.addXP = function(n){
+  var d=NQ.store.d, before=NQ.level(d.xp).lv;
+  d.xp += n;
+  var after=NQ.level(d.xp).lv;
+  if(after>before){
+    NQ.toast('Livello '+after, 'Sei salito di livello.', true);
+    NQ.chip.sting();
+  }
+  NQ.store.save();
+};
+
+NQ.award = function(id){
+  var d=NQ.store.d;
+  if(d.trophies[id]) return false;
+  var t=NQ.TROPHIES.filter(function(x){return x.id===id;})[0];
+  if(!t) return false;
+  d.trophies[id]=Date.now();
+  NQ.store.save();
+  NQ.toast('Trofeo sbloccato', t.icon+'  '+t.name, true);
+  NQ.confetti();
+  NQ.chip.sting();
+  return true;
+};
+
+/* Rivaluta tutti i trofei condizionali. Idempotente. */
+NQ.checkTrophies = function(){
+  var d=NQ.store.d;
+
+  NQ.DAYS.forEach(function(day){
+    if(day.trek && d.done[day.n]) NQ.award(day.trek);
+  });
+  if(d.done[12]) NQ.award('surf');
+
+  var jn=Object.keys(d.journal).filter(function(k){
+    return (d.journal[k].txt||'').trim().length>0;
+  });
+  if(jn.length>=15) NQ.award('cronista');
+  if(d.exp.length>=10) NQ.award('contabile');
+  if(d.photos.length>=10) NQ.award('fotografo');
+  if(Object.keys(d.done).filter(function(k){return d.done[k];}).length>=15) NQ.award('leggenda');
+
+  var late = jn.some(function(k){
+    var ts=d.journal[k].ts; if(!ts) return false;
+    var h=new Date(ts).getHours();
+    return h>=23 || h<3;
+  });
+  if(late) NQ.award('nottambulo');
+};
+
+})();
+
+
+/* ==== zip.js ================================================== */
+/* ============================================================
+   NORGE QUEST — ZIP
+   Scrittura e lettura di archivi senza compressione (metodo "store").
+   Le foto sono già JPEG: comprimerle una seconda volta non guadagna
+   nulla, e senza deflate l'implementazione sta in poche decine di righe
+   e non serve alcuna libreria esterna.
+   ============================================================ */
+
+(function(){
+'use strict';
+
+/* ---------- CRC32 ---------- */
+
+var CRC = (function(){
+  var t=new Uint32Array(256);
+  for(var n=0;n<256;n++){
+    var c=n;
+    for(var k=0;k<8;k++) c = (c&1)? (0xEDB88320 ^ (c>>>1)) : (c>>>1);
+    t[n]=c>>>0;
+  }
+  return t;
+})();
+
+function crc32(u8){
+  var c=0xFFFFFFFF;
+  for(var i=0;i<u8.length;i++) c = CRC[(c ^ u8[i]) & 0xFF] ^ (c>>>8);
+  return (c ^ 0xFFFFFFFF)>>>0;
+}
+
+/* ---------- scrittura binaria ---------- */
+
+function W(n){ var b=new Uint8Array(n); b._o=0; return b; }
+function u16(b,v){ b[b._o++]=v&255; b[b._o++]=(v>>>8)&255; }
+function u32(b,v){ b[b._o++]=v&255; b[b._o++]=(v>>>8)&255; b[b._o++]=(v>>>16)&255; b[b._o++]=(v>>>24)&255; }
+function str(b,s){ for(var i=0;i<s.length;i++) b[b._o++]=s.charCodeAt(i); }
+
+function utf8(s){
+  if(window.TextEncoder) return new TextEncoder().encode(s);
+  var out=[], i, c;
+  for(i=0;i<s.length;i++){
+    c=s.charCodeAt(i);
+    if(c<128) out.push(c);
+    else if(c<2048){ out.push(192|(c>>6), 128|(c&63)); }
+    else { out.push(224|(c>>12), 128|((c>>6)&63), 128|(c&63)); }
+  }
+  return new Uint8Array(out);
+}
+
+function bytesOf(data){
+  if(data instanceof Uint8Array) return Promise.resolve(data);
+  if(typeof data === 'string')   return Promise.resolve(utf8(data));
+  if(data instanceof ArrayBuffer) return Promise.resolve(new Uint8Array(data));
+  // Blob
+  if(data.arrayBuffer) return data.arrayBuffer().then(function(b){ return new Uint8Array(b); });
+  return new Promise(function(res,rej){
+    var fr=new FileReader();
+    fr.onload=function(){ res(new Uint8Array(fr.result)); };
+    fr.onerror=function(){ rej(new Error('lettura blob fallita')); };
+    fr.readAsArrayBuffer(data);
+  });
+}
+
+function dosTime(dt){
+  return ((dt.getHours()<<11) | (dt.getMinutes()<<5) | (dt.getSeconds()>>1)) & 0xFFFF;
+}
+function dosDate(dt){
+  return (((dt.getFullYear()-1980)<<9) | ((dt.getMonth()+1)<<5) | dt.getDate()) & 0xFFFF;
+}
+
+/* files: [{ name, data }] — data può essere stringa, Blob, Uint8Array.
+   Ritorna una Promise<Blob>. I byte delle foto non restano tutti in
+   memoria: si leggono uno alla volta per il CRC e poi si passa il Blob
+   originale al costruttore finale. */
+NQ.zipCreate = function(files){
+  var parts=[], central=[], offset=0;
+  var now=new Date(), time=dosTime(now), date=dosDate(now);
+
+  return files.reduce(function(chain, f){
+    return chain.then(function(){
+      return bytesOf(f.data).then(function(u8){
+        var name=utf8(f.name), crc=crc32(u8), size=u8.length;
+
+        var lh=W(30+name.length);
+        u32(lh,0x04034b50); u16(lh,20); u16(lh,0x0800); u16(lh,0);   // 0x0800 = nome in UTF-8
+        u16(lh,time); u16(lh,date);
+        u32(lh,crc); u32(lh,size); u32(lh,size);
+        u16(lh,name.length); u16(lh,0);
+        lh.set(name,30);
+
+        parts.push(lh, u8);
+        central.push({ name:name, crc:crc, size:size, offset:offset });
+        offset += lh.length + size;
+      });
+    });
+  }, Promise.resolve()).then(function(){
+
+    var cdParts=[], cdSize=0;
+    central.forEach(function(c){
+      var ch=W(46+c.name.length);
+      u32(ch,0x02014b50); u16(ch,20); u16(ch,20); u16(ch,0x0800); u16(ch,0);
+      u16(ch,time); u16(ch,date);
+      u32(ch,c.crc); u32(ch,c.size); u32(ch,c.size);
+      u16(ch,c.name.length); u16(ch,0); u16(ch,0);
+      u16(ch,0); u16(ch,0); u32(ch,0);
+      u32(ch,c.offset);
+      ch.set(c.name,46);
+      cdParts.push(ch); cdSize += ch.length;
+    });
+
+    var end=W(22);
+    u32(end,0x06054b50); u16(end,0); u16(end,0);
+    u16(end,central.length); u16(end,central.length);
+    u32(end,cdSize); u32(end,offset); u16(end,0);
+
+    return new Blob(parts.concat(cdParts,[end]), { type:'application/zip' });
+  });
+};
+
+/* Lettura: si scorre la directory centrale, non gli header locali,
+   perché è l'unico punto in cui le dimensioni sono sempre affidabili. */
+NQ.zipRead = function(blob){
+  return bytesOf(blob).then(function(b){
+    var dv=new DataView(b.buffer, b.byteOffset, b.byteLength);
+
+    var end=-1;
+    for(var i=b.length-22;i>=0 && i>b.length-65558;i--){
+      if(dv.getUint32(i,true)===0x06054b50){ end=i; break; }
+    }
+    if(end<0) throw new Error('non è un file ZIP');
+
+    var count=dv.getUint16(end+10,true), off=dv.getUint32(end+16,true);
+    var out=[], dec = window.TextDecoder? new TextDecoder('utf-8') : null;
+
+    for(var k=0;k<count;k++){
+      if(dv.getUint32(off,true)!==0x02014b50) throw new Error('directory centrale corrotta');
+      var method=dv.getUint16(off+10,true);
+      var size  =dv.getUint32(off+24,true);
+      var nLen  =dv.getUint16(off+28,true);
+      var eLen  =dv.getUint16(off+30,true);
+      var cLen  =dv.getUint16(off+32,true);
+      var lOff  =dv.getUint32(off+42,true);
+      var nameBytes=b.subarray(off+46, off+46+nLen);
+      var name = dec? dec.decode(nameBytes) : String.fromCharCode.apply(null, nameBytes);
+
+      if(method!==0) throw new Error('archivio compresso: supportato solo "store"');
+
+      var lnLen=dv.getUint16(lOff+26,true), leLen=dv.getUint16(lOff+28,true);
+      var start=lOff+30+lnLen+leLen;
+      out.push({ name:name, data:b.subarray(start, start+size) });
+
+      off += 46+nLen+eLen+cLen;
+    }
+    return out;
+  });
+};
+
+})();
+
+
+/* ==== map.js ================================================== */
+/* ============================================================
+   NORGE QUEST — MAPPA
+   Coste, laghi e fiumi reali (Natural Earth 10m) rasterizzati in
+   fase di build a 2 km per tile e spediti come bitmap di bit.
+   Il rilievo è ricostruito qui: distanza dal mare come base,
+   più i massicci veri messi al loro posto, più ombreggiatura.
+   ============================================================ */
+
+(function(){
+'use strict';
+
+var M = NQ.MAPDATA;
+var COLS = M.cols, ROWS = M.rows, N = COLS*ROWS;
+
+/* ---------- decodifica bitmap ---------- */
+
+function unpack(b64, n){
+  var bin = atob(b64), out = new Uint8Array(n);
+  for(var i=0;i<n;i++) out[i] = (bin.charCodeAt(i>>3) >> (7-(i&7))) & 1;
+  return out;
+}
+var LAND = unpack(M.land, N);
+var LAKE = unpack(M.lake, N);
+
+/* ---------- proiezione ---------- */
+
+function toGrid(lon,lat){
+  return [ (lon-M.lon0)/(M.lon1-M.lon0)*COLS,
+           (M.lat1-lat)/(M.lat1-M.lat0)*ROWS ];
+}
+var KM_PER_TILE = (M.lon1-M.lon0)*111*Math.cos((M.lat0+M.lat1)/2*Math.PI/180)/COLS;
+
+/* ---------- massicci ---------- */
+/* La distanza dal mare da sola metterebbe le montagne al centro
+   geometrico del paese. Questi le rimettono dove stanno davvero. */
+
+var MASSIF = [
+  // lon    lat     raggio km  spinta
+  [ 8.35, 61.50,  55,  0.62],  // Jotunheimen — Galdhøpiggen, 2469 m
+  [ 7.05, 61.68,  45,  0.66],  // Jostedalsbreen — il ghiacciaio più grande d'Europa continentale
+  [ 7.80, 61.82,  35,  0.50],  // Breheimen
+  [ 9.20, 62.10,  55,  0.52],  // Dovrefjell — Reinheimen
+  [ 9.85, 61.85,  35,  0.50],  // Rondane
+  [ 8.20, 61.10,  40,  0.44],  // Filefjell — Langfjella
+  [ 8.05, 60.75,  35,  0.44],  // Skarvheimen
+  [ 7.60, 60.30,  70,  0.46],  // Hardangervidda — l'altopiano
+  [ 6.35, 60.05,  24,  0.58],  // Folgefonna — il ghiacciaio sopra Odda
+  [ 7.85, 60.62,  30,  0.50],  // Hallingskarvet
+  [ 7.20, 59.85,  35,  0.42],  // Haukelifjell
+  [ 7.30, 59.30,  45,  0.34],  // Setesdalsheiene
+  [ 6.75, 59.10,  32,  0.38],  // Ryfylkeheiane — il Kjerag sta qui
+  [ 6.60, 60.55,  28,  0.36],  // monti sopra Voss
+  // pianure: senza queste, la costa piatta si colora come collina
+  [ 5.65, 58.70,  32, -0.24],  // Jæren
+  [10.90, 59.70,  50, -0.24],  // Østfold e l'entroterra di Oslo
+  [10.75, 60.70,  35, -0.20],  // valle del Mjøsa
+  [ 9.50, 61.45,  22, -0.16],  // Gudbrandsdalen — la valle, non la cresta
+  [ 8.10, 58.30,  45, -0.16]   // Sørlandet
+];
+
+/* ---------- rilievo ---------- */
+
+var elev = null;
+
+function buildElev(){
+  if(elev) return elev;
+
+  /* distanza dal mare aperto: i laghi non contano, in Norvegia
+     stanno in quota quanto le montagne che li circondano */
+  var dist = new Int16Array(N).fill(-1);
+  var q = new Int32Array(N), head=0, tail=0;
+  for(var i=0;i<N;i++) if(!LAND[i]){ dist[i]=0; q[tail++]=i; }
+
+  while(head<tail){
+    var c=q[head++], cx=c%COLS, cy=(c/COLS)|0, nd=dist[c]+1;
+    if(cx>0      && dist[c-1]===-1)   { dist[c-1]=nd;   q[tail++]=c-1; }
+    if(cx<COLS-1 && dist[c+1]===-1)   { dist[c+1]=nd;   q[tail++]=c+1; }
+    if(cy>0      && dist[c-COLS]===-1){ dist[c-COLS]=nd;q[tail++]=c-COLS; }
+    if(cy<ROWS-1 && dist[c+COLS]===-1){ dist[c+COLS]=nd;q[tail++]=c+COLS; }
+  }
+
+  var maxD=0;
+  for(i=0;i<N;i++) if(dist[i]>maxD) maxD=dist[i];
+
+  elev = new Float32Array(N);
+  for(i=0;i<N;i++){
+    if(!LAND[i]){ elev[i] = -dist[i]/maxD; continue; }   // negativo = profondità del mare
+    /* Base volutamente bassa. Da sola la distanza dal mare metterebbe
+       il tetto della Norvegia al confine svedese, che è il posto
+       sbagliato: sono i massicci qui sotto a decidere dove si sale. */
+    elev[i] = Math.pow(Math.min(1, dist[i]/(maxD*0.45)), 0.8) * 0.38;
+  }
+
+  /* i massicci, sommati in gaussiana */
+  MASSIF.forEach(function(m){
+    var g=toGrid(m[0],m[1]), gx=g[0], gy=g[1];
+    var r=m[2]/KM_PER_TILE, s2=2*(r/2)*(r/2), lim=Math.ceil(r*1.6);
+    var x0=Math.max(0,Math.floor(gx-lim)), x1=Math.min(COLS-1,Math.ceil(gx+lim));
+    var y0=Math.max(0,Math.floor(gy-lim)), y1=Math.min(ROWS-1,Math.ceil(gy+lim));
+    for(var y=y0;y<=y1;y++) for(var x=x0;x<=x1;x++){
+      var idx=y*COLS+x; if(!LAND[idx]) continue;
+      var dx=x-gx, dy=y-gy;
+      elev[idx] += m[3]*Math.exp(-(dx*dx+dy*dy)/s2);
+    }
+  });
+
+  /* grana fine, deterministica: rompe le fasce di colore */
+  for(i=0;i<N;i++) if(LAND[i]) elev[i] = Math.max(0, Math.min(1, elev[i] + (hash(i)-0.5)*0.05));
+
+  return elev;
+}
+
+function hash(i){
+  var h = i*374761393;
+  h = (h ^ (h>>13)) * 1274126177;
+  return ((h ^ (h>>16)) >>> 0) / 4294967296;
+}
+
+/* ---------- palette ---------- */
+/* Verdi profondi sulla costa, ocra sull'altopiano, roccia e infine
+   ghiaccio: la scala di una carta topografica norvegese. */
+
+var TERRA = [
+  [0.00,0x4a,0x7a,0x4d], [0.08,0x42,0x72,0x48], [0.16,0x37,0x64,0x40],
+  [0.26,0x3c,0x63,0x42], [0.36,0x4c,0x66,0x44], [0.45,0x60,0x6c,0x47],
+  [0.54,0x74,0x71,0x4c], [0.63,0x82,0x78,0x59], [0.72,0x8d,0x86,0x72],
+  [0.80,0x9c,0x99,0x90], [0.88,0xb5,0xb6,0xb2], [0.95,0xdb,0xe4,0xe8]
+];
+var MARE = [
+  [0.00,0x33,0x77,0xa6], [0.06,0x27,0x62,0x8e], [0.14,0x1d,0x4e,0x74],
+  [0.26,0x17,0x3e,0x5e], [0.45,0x11,0x31,0x4c]
+];
+var ACQUA_INT = [0x3f,0x8c,0xc4];   // laghi e fiumi
+
+function band(scale,v){
+  var b=scale[0];
+  for(var i=1;i<scale.length;i++){ if(v>=scale[i][0]) b=scale[i]; else break; }
+  return b;
+}
+
+/* ---------- terreno pre-renderizzato ---------- */
+/* Scritto una volta sola in un'ImageData 1 pixel per cella, poi
+   ingrandita con lo smoothing spento: pixel netti a ogni zoom. */
+
+var tile=null;
+
+function bakeTile(){
+  if(tile) return tile;
+  var e=buildElev();
+  var cv=document.createElement('canvas');
+  cv.width=COLS; cv.height=ROWS;
+  var cx=cv.getContext('2d');
+  var img=cx.createImageData(COLS,ROWS), px=img.data;
+
+  for(var y=0;y<ROWS;y++) for(var x=0;x<COLS;x++){
+    var i=y*COLS+x, o=i*4, c, shade=1;
+
+    if(LAKE[i] && LAND[i]){
+      c=ACQUA_INT;
+    } else if(!LAND[i]){
+      c=band(MARE, -e[i]).slice(1);
+    } else {
+      c=band(TERRA, e[i]).slice(1);
+      /* ombreggiatura con luce da nord-ovest, quantizzata su tre
+         livelli per non impastare l'effetto pixel */
+      var nw = (x>0 && y>0)? e[i-COLS-1] : e[i];
+      var d = e[i]-nw;
+      shade = d >  0.012 ? 1.14 : d < -0.012 ? 0.86 : 1;
+    }
+    px[o  ]=Math.max(0,Math.min(255, c[0]*shade));
+    px[o+1]=Math.max(0,Math.min(255, c[1]*shade));
+    px[o+2]=Math.max(0,Math.min(255, c[2]*shade));
+    px[o+3]=255;
+  }
+  cx.putImageData(img,0,0);
+  tile=cv;
+  return tile;
+}
+
+/* ---------- nodi ---------- */
+
+function nodes(ts){
+  return NQ.DAYS.map(function(day){
+    var p=toGrid(day.lon,day.lat);
+    return { n:day.n, day:day, x:Math.round(p[0]*ts), y:Math.round(p[1]*ts) };
+  });
+}
+
+/* scintille sull'acqua: poche celle scelte una volta, accese a turno */
+var SPARK=[];
+(function(){
+  for(var i=0;i<N;i++){
+    if(LAND[i]) continue;
+    if(hash(i*7+3) > 0.997) SPARK.push([i%COLS,(i/COLS)|0, hash(i)]);
+  }
+})();
+
+/* ---------- renderer ---------- */
+
+var Map = {
+  cv:null, cx:null, ts:2, raf:null, t0:0, nodeCache:null, bound:false,
+
+  mount:function(canvas){
+    this.cv=canvas;
+    this.cx=canvas.getContext('2d');
+    var self=this;
+    canvas.addEventListener('click',function(e){ self.click(e); });
+    this.resize();
+    if(!this.bound){
+      this.bound=true;
+      addEventListener('resize', function(){ self.resize(); self.drawStatic(); });
+    }
+  },
+
+  resize:function(){
+    if(!this.cv) return;
+    var avail=Math.max(280, this.cv.parentElement.clientWidth-8);
+    this.ts=Math.max(2, Math.min(5, Math.floor(avail/COLS)));
+
+    var w=COLS*this.ts, h=ROWS*this.ts;
+    var dpr=Math.min(3, window.devicePixelRatio||1);
+    this.cv.style.width=w+'px'; this.cv.style.height=h+'px';
+    this.cv.width=Math.round(w*dpr); this.cv.height=Math.round(h*dpr);
+    this.cx.setTransform(dpr,0,0,dpr,0,0);
+    this.cx.imageSmoothingEnabled=false;
+    this.nodeCache=nodes(this.ts);
+  },
+
+  reached:function(){
+    var ph=NQ.phase();
+    if(ph==='pre')  return 0;
+    if(ph==='post') return NQ.DAYS.length-1;
+    var i=NQ.dayIndex();
+    return i<0? 0 : i;
+  },
+
+  start:function(){
+    var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion:reduce)').matches;
+    if(reduce){ this.drawStatic(); return; }
+    if(this.raf) return;
+    this.t0=performance.now();
+    var self=this;
+    (function loop(now){ self.draw(now); self.raf=requestAnimationFrame(loop); })(performance.now());
+  },
+
+  stop:function(){ if(this.raf){ cancelAnimationFrame(this.raf); this.raf=null; } },
+
+  drawStatic:function(){ this.draw(this.t0||0, true); },
+
+  draw:function(now, still){
+    var cx=this.cx, ts=this.ts;
+    if(!cx) return;
+    var t=still? 0 : (now-this.t0)/1000;
+
+    cx.drawImage(bakeTile(), 0,0, COLS*ts, ROWS*ts);
+
+    if(!still){
+      cx.fillStyle='rgba(255,255,255,.55)';
+      for(var s=0;s<SPARK.length;s++){
+        var sp=SPARK[s];
+        if(Math.sin(t*1.7 + sp[2]*6.283) > 0.86) cx.fillRect(sp[0]*ts, sp[1]*ts, ts, ts);
+      }
+    }
+
+    var NN=this.nodeCache||nodes(ts), reach=this.reached();
+
+    for(var i=0;i<NN.length-1;i++){
+      dots(cx, NN[i], NN[i+1], i<reach);
+    }
+    NN.forEach(function(nd,i){
+      marker(cx, nd, i<reach? 'done' : (i===reach? 'now':'next'), t, still);
+    });
+
+    var vp = Math.max(1, ts-1);
+    var u = still? 1 : Math.min(1, (t%10)/6.5);
+    var pos = along(NN, reach, u);
+    NQ.drawSprite(cx,'van',
+      Math.round(pos.x - 6*vp), Math.round(pos.y - 11*vp) + (still?0:Math.round(Math.sin(t*3.4)*1.5)),
+      vp, pos.dx<0);
+
+    NQ.drawSprite(cx,'flag', NN[NN.length-1].x+5*vp, NN[NN.length-1].y-11*vp, vp);
+  },
+
+  click:function(e){
+    var r=this.cv.getBoundingClientRect();
+    var x=e.clientX-r.left, y=e.clientY-r.top;
+    var NN=this.nodeCache||nodes(this.ts), best=null, bd=1e9;
+    NN.forEach(function(nd){
+      var d=Math.hypot(nd.x-x, nd.y-y);
+      if(d<bd){ bd=d; best=nd; }
+    });
+    if(best && bd<22) NQ.openDay(best.n);
+  }
+};
+
+function dots(cx,a,b,done){
+  var d=Math.hypot(b.x-a.x,b.y-a.y), n=Math.max(1,Math.round(d/6));
+  cx.fillStyle = done? 'rgba(245,197,66,.95)' : 'rgba(255,255,255,.34)';
+  for(var i=1;i<n;i++){
+    var u=i/n;
+    cx.fillRect(Math.round(a.x+(b.x-a.x)*u)-1, Math.round(a.y+(b.y-a.y)*u)-1, 2,2);
+  }
+}
+
+function marker(cx,nd,state,t,still){
+  var lbl=String(nd.n), w=lbl.length*6+3, h=11;
+  var x=nd.x-Math.round(w/2), y=nd.y-Math.round(h/2);
+  var fill,border,ink;
+
+  if(state==='done'){ fill='#2f6340'; border='#7fdb6a'; ink='#e8f6e4'; }
+  else if(state==='now'){
+    var on = still? 1 : (Math.sin(t*5)>0?1:0);
+    fill = on? '#f5c542':'#a8801a'; border='#ffffff'; ink='#1b1b22';
+    if(!still){
+      cx.fillStyle='rgba(245,197,66,'+(0.22+0.18*Math.sin(t*5))+')';
+      cx.fillRect(x-5,y-5,w+10,h+10);
+    }
+  }
+  else { fill='#16283d'; border='#7ba7d4'; ink='#cfe0f0'; }
+
+  cx.fillStyle='rgba(0,0,0,.45)'; cx.fillRect(x-1,y+2,w+4,h+4);   // ombra portata
+  cx.fillStyle=border; cx.fillRect(x-2,y-2,w+4,h+4);
+  cx.fillStyle=fill;   cx.fillRect(x,y,w,h);
+  NQ.drawText(cx,lbl,x+2,y+2,1,ink);
+
+  if(nd.day.trek){
+    cx.fillStyle = state==='done'? '#7fdb6a':'#e8544b';
+    cx.fillRect(nd.x-1,y-8,3,3);
+    cx.fillRect(nd.x-3,y-10,7,2);
+  }
+}
+
+function along(NN, reach, u){
+  if(reach<=0) return { x:NN[0].x, y:NN[0].y, dx:1 };
+  var segs=[], tot=0, i;
+  for(i=0;i<reach;i++){
+    var d=Math.hypot(NN[i+1].x-NN[i].x, NN[i+1].y-NN[i].y);
+    segs.push(d); tot+=d;
+  }
+  var target=tot*u, acc=0;
+  for(i=0;i<segs.length;i++){
+    if(acc+segs[i]>=target || i===segs.length-1){
+      var l=segs[i]? Math.max(0,Math.min(1,(target-acc)/segs[i])) : 1;
+      return { x:NN[i].x+(NN[i+1].x-NN[i].x)*l,
+               y:NN[i].y+(NN[i+1].y-NN[i].y)*l,
+               dx:NN[i+1].x-NN[i].x };
+    }
+    acc+=segs[i];
+  }
+  return { x:NN[reach].x, y:NN[reach].y, dx:1 };
+}
+
+NQ.map=Map;
+NQ.mapDims=function(){ return { cols:COLS, rows:ROWS }; };
+NQ.mapDebug={ toGrid:toGrid, land:LAND, lake:LAKE, elev:buildElev, kmPerTile:KM_PER_TILE };
+
+})();
+
+
+/* ==== views.js ================================================ */
+/* ============================================================
+   NORGE QUEST — VISTE
+   ============================================================ */
+
+(function(){
+'use strict';
+
+var $=NQ.$, esc=NQ.esc, nok=NQ.nok;
+
+function d(){ return NQ.store.d; }
+function rate(){ return d().rate || NQ.TRIP.rate; }
+function dayByN(n){ return NQ.DAYS.filter(function(x){return x.n===+n;})[0]; }
+
+var KIND={
+  logistica:{ ic:'🔧', name:'Logistica' },
+  trekking: { ic:'🥾', name:'Trekking'  },
+  fiordi:   { ic:'🏔', name:'Fiordi'    },
+  spiaggia: { ic:'🏖', name:'Mare'      },
+  citta:    { ic:'🏘', name:'Città'     }
+};
+
+function stars(n,max,cls){
+  var h='<span class="bars '+(cls||'')+'">';
+  for(var i=0;i<(max||5);i++) h+='<i class="'+(i<n?'on':'')+'"></i>';
+  return h+'</span>';
+}
+
+function dateLabel(day){
+  var m=['gen','feb','mar','apr','mag','giu','lug','ago','set','ott','nov','dic'];
+  var p=day.date.split('-');
+  return +p[2]+' '+m[+p[1]-1];
+}
+
+/* ============================================================
+   HUD
+   ============================================================ */
+
+NQ.renderHud=function(){
+  var s=d(), L=NQ.level(s.xp);
+  var done=Object.keys(s.done).filter(function(k){return s.done[k];}).length;
+  var tro=Object.keys(s.trophies).length;
+
+  $('#lvl').textContent='LV '+L.lv;
+  $('#xpfill').style.width=L.pct+'%';
+  $('#xptxt').innerHTML='<b>'+s.xp+'</b> XP';
+  $('#stDays').innerHTML='<b>'+done+'</b>/15 giorni';
+  $('#stTro').innerHTML='<b>'+tro+'</b>/'+NQ.TROPHIES.length+' 🏆';
+  var mb=$('#muteBtn');
+  mb.textContent = s.mute? '🔇':'🔊';
+  mb.classList.toggle('on', !s.mute);
+  mb.setAttribute('aria-label', s.mute? 'Attiva la musica':'Disattiva la musica');
+};
+
+/* ============================================================
+   VISTA MAPPA
+   ============================================================ */
+
+/* Titolo disegnato con il font bitmap 5x7: è l'unico modo di avere
+   lettere davvero pixelate senza caricare un webfont dall'esterno. */
+function drawTitle(){
+  var cv=$('#titlecv'); if(!cv) return;
+  var host=cv.parentElement;
+  var avail=Math.max(240, host.clientWidth);
+  var px=Math.max(2, Math.min(6, Math.floor(avail/72)));
+  var sub='NORVEGIA IN VAN  1-15 AGO 2026';
+  var spx=Math.max(1, Math.floor(px/2.5));
+
+  var w=Math.max(NQ.textWidth('NORGE QUEST',px), NQ.textWidth(sub,spx));
+  var hh=7*px + px + 12 + 7*spx;
+
+  var dpr=Math.min(3, window.devicePixelRatio||1);
+  cv.style.width=w+'px'; cv.style.height=hh+'px';
+  cv.width=Math.round(w*dpr); cv.height=Math.round(hh*dpr);
+  var cx=cv.getContext('2d');
+  cx.setTransform(dpr,0,0,dpr,0,0);
+  cx.imageSmoothingEnabled=false;
+
+  NQ.drawText(cx,'NORGE QUEST', Math.round((w-NQ.textWidth('NORGE QUEST',px))/2), 0, px, '#f5c542', '#8a5a12');
+  NQ.drawText(cx, sub, Math.round((w-NQ.textWidth(sub,spx))/2), 7*px+px+12, spx, '#7d97b3');
+}
+
+NQ.renderMap=function(){
+  var ph=NQ.phase(), idx=NQ.dayIndex(), s=d();
+  var h='<div class="center" style="margin:2px 0 16px"><canvas id="titlecv"></canvas></div>';
+
+  if(ph==='pre'){
+    var n=NQ.daysTo(NQ.TRIP.start);
+    h+='<div class="pxbox lo cdown">'+
+         '<div class="big">'+n+'</div>'+
+         '<div class="lab">'+(n===1?'giorno alla partenza':'giorni alla partenza')+'</div>'+
+         '<p class="muted small mt">Si parte sabato 1 agosto da Sandefjord. Quindici giorni, '+
+         'quattro trekking e circa 2.400 km di fiordi.</p>'+
+       '</div>';
+  } else if(ph==='live' && idx>=0){
+    var day=NQ.DAYS[idx];
+    h+='<button class="pxbox lo daycard today" style="margin-bottom:14px" onclick="NQ.openDay('+day.n+')">'+
+         '<span class="dn"><i>'+day.n+'</i><s>oggi</s></span>'+
+         '<span class="dbody">'+
+           '<span class="dt">'+esc(day.title)+'</span>'+
+           '<span class="dr">'+esc(day.from)+' → '+esc(day.to)+' · '+NQ.hm(day.realMin||day.driveMin)+' di guida</span>'+
+           '<span class="dtag">'+KIND[day.kind].ic+' '+KIND[day.kind].name+'</span>'+
+         '</span>'+
+         '<span class="dchk">›</span>'+
+       '</button>';
+  } else if(ph==='post'){
+    h+='<div class="pxbox lo center">'+
+         '<h2>Viaggio concluso</h2>'+
+         '<p class="muted small">Quindici giorni, quattro trekking, un van. '+
+         'Da qui in poi questa pagina è un archivio: rileggi il diario, guarda i conti, esporta tutto.</p>'+
+         '<button class="pxbtn go mt" onclick="NQ.go(\'journal\')">Apri il diario</button>'+
+       '</div>';
+  }
+
+  h+='<div id="mapwrap"><canvas id="mapcanvas"></canvas></div>'+
+     '<div class="maplegend">'+
+       '<span><i style="background:#f5c542"></i>fatto</span>'+
+       '<span><i style="background:#4a80bd"></i>da fare</span>'+
+       '<span><i style="background:#e8544b"></i>trekking</span>'+
+       '<span>tocca un nodo per aprire il giorno</span>'+
+     '</div>';
+
+  h+='<h3>Le 15 tappe</h3><div class="daylist">';
+  NQ.DAYS.forEach(function(day){
+    var isToday = day.date===NQ.today;
+    var isDone  = !!s.done[day.n];
+    h+='<button class="daycard'+(isToday?' today':'')+(isDone?' done':'')+'" onclick="NQ.openDay('+day.n+')">'+
+         '<span class="dn"><i>'+day.n+'</i><s>'+dateLabel(day)+'</s></span>'+
+         '<span class="dbody">'+
+           '<span class="dt">'+esc(day.title)+'</span>'+
+           '<span class="dr">'+esc(day.from)+' → '+esc(day.to)+' · '+NQ.hm(day.realMin||day.driveMin)+
+             (day.warn? ' ⚠':'')+'</span>'+
+           '<span class="dtag">'+KIND[day.kind].ic+' '+KIND[day.kind].name+'</span>'+
+         '</span>'+
+         '<span class="dchk">'+(isDone?'✅':'›')+'</span>'+
+       '</button>';
+  });
+  h+='</div>';
+
+  h+='<h3 class="mt">Bacheca dei trofei</h3><div class="trophies">';
+  NQ.TROPHIES.forEach(function(t){
+    var got=!!s.trophies[t.id];
+    h+='<div class="trophy'+(got?' got':'')+'">'+
+         '<div class="tic">'+t.icon+'</div>'+
+         '<div class="tn">'+esc(got? t.name:'???')+'</div>'+
+         '<div class="td">'+esc(t.desc)+'</div>'+
+       '</div>';
+  });
+  h+='</div>';
+
+  $('#v-map').innerHTML=h;
+  drawTitle();
+  NQ.map.mount($('#mapcanvas'));
+  NQ.map.start();
+};
+
+/* ============================================================
+   DETTAGLIO GIORNO
+   ============================================================ */
+
+NQ.openDay=function(n){
+  var day=dayByN(n); if(!day) return;
+  var s=d(), sun=NQ.sun(day.date, day.lat, day.lon);
+  var K=KIND[day.kind];
+  var drive = day.realMin||day.driveMin;
+
+  var h='<button class="pxbtn sm" onclick="NQ.go(\'map\')">‹ Mappa</button>';
+
+  h+='<div class="dayhead mt">'+
+       '<div class="kicker">Giorno '+day.n+' · '+esc(day.dow)+' '+dateLabel(day)+'</div>'+
+       '<h2>'+esc(day.title)+'</h2>'+
+       '<div class="route">'+K.ic+' '+esc(day.from)+' → '+esc(day.to)+'</div>'+
+     '</div>';
+
+  /* fatti chiave */
+  h+='<div class="factgrid">'+
+       '<div class="fact'+(day.warn?' alert':'')+'"><s>Guida</s><b>'+NQ.hm(drive)+'</b></div>'+
+       '<div class="fact"><s>Alba</s><b>'+(sun.rise||'—')+'</b></div>'+
+       '<div class="fact"><s>Tramonto</s><b>'+(sun.set||'—')+'</b></div>'+
+       '<div class="fact"><s>Luce</s><b>'+NQ.hm(sun.light)+'</b></div>'+
+     '</div>';
+
+  if(day.warn){
+    h+='<div class="warnbox"><b>⚠ Tempo di guida ottimistico.</b> Il foglio indica '+
+       NQ.hm(day.driveMin)+', il percorso reale è più vicino a '+NQ.hm(day.realMin)+
+       '. Il dato originale resta qui sopra come riferimento, ma pianifica sul secondo.</div>';
+  }
+
+  h+='<div class="pxbox"><p>'+esc(day.brief)+'</p></div>';
+
+  h+='<div class="pxbox"><h3>Programma</h3><ul class="acts">';
+  day.acts.forEach(function(a){ h+='<li>'+esc(a)+'</li>'; });
+  h+='</ul></div>';
+
+  if(day.trek){
+    var tk=NQ.TREKS[day.trek];
+    h+='<button class="bosscard" onclick="NQ.openTrek(\''+day.trek+'\')">'+
+         '<span class="bh" style="display:block">'+
+           '<span class="bn">Boss '+tk.boss+' di 4</span>'+
+           '<h3>'+esc(tk.name)+'</h3>'+
+           '<span class="bs">'+esc(tk.sub)+'</span>'+
+         '</span>'+
+         '<span class="bb">'+
+           '<span><b>'+tk.km+'</b> km</span>'+
+           '<span><b>'+tk.up+'</b> m D+</span>'+
+           '<span><b>'+esc(tk.hours)+'</b></span>'+
+           stars(tk.stars,5,'risk')+
+           '<span style="margin-left:auto">briefing ›</span>'+
+         '</span>'+
+       '</button>';
+  }
+
+  h+='<div class="pxbox"><h3>Da sapere</h3>';
+  day.tips.forEach(function(t){
+    h+='<div class="tip"><div class="ic">'+t[0]+'</div><div class="tx">'+esc(t[1])+'</div></div>';
+  });
+  h+='</div>';
+
+  h+='<div class="pxbox"><h3>Il van su questa tratta</h3>'+
+       '<div class="row" style="align-items:center;margin-bottom:8px">'+
+         '<div style="flex:0 0 auto">'+stars(day.drive.level,4)+'</div>'+
+         '<div class="small muted" style="flex:1">difficoltà di guida</div>'+
+       '</div>'+
+       '<p class="small" style="margin:0">'+esc(day.drive.note)+'</p>'+
+     '</div>';
+
+  var tot=day.costs.reduce(function(a,c){return a+c[1];},0);
+  h+='<div class="pxbox"><h3>Costi attesi</h3><div class="exlist">';
+  day.costs.forEach(function(c){
+    h+='<div class="exrow"><span class="en">'+esc(c[0])+'</span>'+
+       '<span class="ea money">'+nok(c[1])+' kr</span></div>';
+  });
+  h+='</div><p class="small muted mt" style="margin-bottom:0">Totale indicativo <b>'+nok(tot)+' kr</b> '+
+     '≈ '+NQ.eur(tot,rate())+' €. Stime, non preventivi.</p></div>';
+
+  if(day.sleep && day.sleep!=='—'){
+    h+='<div class="pxbox lo"><h3>Dove si dorme</h3><p style="margin:0">'+esc(day.sleep)+'</p></div>';
+  }
+
+  var isDone=!!s.done[day.n];
+  h+='<div class="pxbox center">'+
+       '<button class="pxbtn '+(isDone?'':'go')+'" onclick="NQ.toggleDay('+day.n+')">'+
+         (isDone? '↩ Segna come da fare' : '✓ Giornata completata  +'+day.xp+' XP')+
+       '</button>'+
+       '<div class="small muted mt"><button class="pxbtn sm" onclick="NQ.go(\'journal\','+day.n+')">📖 Scrivi il diario di oggi</button></div>'+
+     '</div>';
+
+  $('#v-day').innerHTML=h;
+  NQ.go('day', null, true);
+  NQ.chip.want(day.trek? 'boss':'route');
+};
+
+NQ.toggleDay=function(n){
+  var s=d(), day=dayByN(n);
+  if(s.done[n]){
+    delete s.done[n];
+    s.xp=Math.max(0, s.xp-day.xp);
+    NQ.store.save();
+  } else {
+    s.done[n]=true;
+    NQ.store.save();
+    NQ.addXP(day.xp);
+    NQ.toast('Giorno '+n+' completato','+'+day.xp+' XP');
+  }
+  NQ.checkTrophies();
+  NQ.renderHud();
+  NQ.openDay(n);
+};
+
+/* ============================================================
+   TREKKING
+   ============================================================ */
+
+NQ.renderTreks=function(){
+  var s=d();
+  var h='<div class="pxbox lo"><h2>I quattro boss</h2>'+
+        '<p class="small muted" style="margin:0">Quattro trekking in dieci giorni, con Trolltunga al centro. '+
+        'Ogni scheda ha logistica, kit, rischi e l\'ora entro cui conviene essere partito.</p></div>';
+
+  h+='<div class="bossgrid">';
+  Object.keys(NQ.TREKS).forEach(function(id){
+    var t=NQ.TREKS[id], got=!!s.trophies[id];
+    h+='<button class="bosscard" onclick="NQ.openTrek(\''+id+'\')">'+
+         '<span class="bh" style="display:block">'+
+           '<span class="bn">Boss '+t.boss+' · Giorno '+t.day+(got?' · ✅ fatto':'')+'</span>'+
+           '<h3>'+esc(t.name)+'</h3>'+
+           '<span class="bs">'+esc(t.sub)+'</span>'+
+         '</span>'+
+         '<span class="bb">'+
+           '<span><b>'+t.km+'</b> km</span>'+
+           '<span><b>'+t.up+'</b> m D+</span>'+
+           '<span><b>'+esc(t.hours)+'</b></span>'+
+           stars(t.stars,5,'risk')+
+         '</span>'+
+       '</button>';
+  });
+  h+='</div>';
+
+  $('#v-trek').innerHTML=h;
+};
+
+NQ.openTrek=function(id){
+  var t=NQ.TREKS[id]; if(!t) return;
+  var day=dayByN(t.day);
+  var sun=NQ.sun(day.date, t.lat, t.lon);
+  var s=d(), got=!!s.trophies[id];
+
+  var h='<button class="pxbtn sm" onclick="NQ.go(\'trek\')">‹ Trekking</button>';
+
+  h+='<div class="dayhead mt" style="background:linear-gradient(180deg,#2a1a2e,#141a24)">'+
+       '<div class="kicker" style="color:#e8544b">Boss '+t.boss+' di 4 · giorno '+t.day+' · '+dateLabel(day)+'</div>'+
+       '<h2>'+esc(t.name)+(got?' ✅':'')+'</h2>'+
+       '<div class="route">'+esc(t.sub)+'</div>'+
+     '</div>';
+
+  h+='<div class="factgrid">'+
+       '<div class="fact"><s>Distanza</s><b>'+t.km+' km</b></div>'+
+       '<div class="fact"><s>Dislivello</s><b>'+t.up+' m</b></div>'+
+       '<div class="fact"><s>Durata</s><b>'+esc(t.hours)+'</b></div>'+
+       '<div class="fact"><s>Tramonto</s><b>'+(sun.set||'—')+'</b></div>'+
+     '</div>';
+
+  h+='<div class="pxbox"><div class="row" style="align-items:center">'+
+       '<div style="flex:0 0 auto">'+stars(t.stars,5,'risk')+'</div>'+
+       '<div class="small muted">impegno</div></div>'+
+       '<p class="mt" style="margin-bottom:0">'+esc(t.desc)+'</p></div>';
+
+  /* finestra oraria calcolata sul tramonto reale */
+  h+='<div class="pxbox lo"><h3>Finestra oraria</h3>'+
+       '<div class="chain">'+
+         '<div class="ci"><div class="cl">Partenza</div><div>entro le <b>'+esc(t.startBy)+'</b></div></div>'+
+         '<div class="ci"><div class="cl">Tramonto</div><div><b>'+(sun.set||'—')+'</b> — '+NQ.hm(sun.light)+' di luce, un margine largo se parti presto</div></div>'+
+         '<div class="ci"><div class="cl">Rientro</div><div>'+esc(t.turnaround)+'</div></div>'+
+       '</div>'+
+       '<p class="small muted mt" style="margin-bottom:0">Alba e tramonto sono calcolati per le coordinate del sentiero, '+
+       'con una tolleranza di qualche minuto.</p>'+
+     '</div>';
+
+  h+='<div class="pxbox"><h3>Logistica</h3><div class="chain">';
+  t.logi.forEach(function(l){
+    h+='<div class="ci"><div class="cl">'+esc(l[0])+'</div><div>'+esc(l[1])+'</div></div>';
+  });
+  h+='</div></div>';
+
+  h+='<div class="pxbox"><h3>Nello zaino</h3><ul class="acts">';
+  t.kit.forEach(function(k){ h+='<li>'+esc(k)+'</li>'; });
+  h+='</ul></div>';
+
+  h+='<div class="pxbox" style="box-shadow:0 0 0 4px var(--red)"><h3 style="color:var(--red)">Rischi</h3><ul class="acts">';
+  t.risks.forEach(function(r){ h+='<li>'+esc(r)+'</li>'; });
+  h+='</ul></div>';
+
+  h+='<div class="pxbox center">'+
+       '<button class="pxbtn sm" onclick="NQ.openDay('+t.day+')">Vedi il giorno '+t.day+' ›</button>'+
+     '</div>';
+
+  $('#v-day').innerHTML=h;
+  NQ.go('day', null, true);
+  NQ.chip.want('boss');
+};
+
+/* ============================================================
+   DIARIO
+   ============================================================ */
+
+var jDay=null;
+
+NQ.renderJournal=function(pick){
+  var s=d();
+  var idx=NQ.dayIndex();
+  if(pick) jDay=+pick;
+  if(jDay==null) jDay = idx>=0? NQ.DAYS[idx].n : (NQ.phase()==='post'? 15:1);
+
+  var day=dayByN(jDay);
+  var e=s.journal[jDay]||{txt:'',mood:null,wx:null,km:''};
+
+  var h='<div class="pxbox lo"><h2>Diario di bordo</h2>'+
+        '<p class="small muted" style="margin:0">Tutto resta su questo dispositivo. '+
+        'Esporta ogni tanto: è l\'unico backup che hai.</p></div>';
+
+  h+='<div class="jnav"><select id="jsel" onchange="NQ.renderJournal(this.value)">';
+  NQ.DAYS.forEach(function(dd){
+    var has=(s.journal[dd.n]&&(s.journal[dd.n].txt||'').trim())?' ✎':'';
+    h+='<option value="'+dd.n+'"'+(dd.n===jDay?' selected':'')+'>'+
+       'Giorno '+dd.n+' · '+dateLabel(dd)+' · '+esc(dd.to)+has+'</option>';
+  });
+  h+='</select></div>';
+
+  h+='<div class="pxbox">'+
+       '<div class="kicker small muted">'+esc(day.from)+' → '+esc(day.to)+'</div>'+
+       '<h3 style="margin-top:6px">Com\'è andata?</h3>'+
+       '<textarea id="jtxt" placeholder="Cosa hai visto, chi hai incontrato, cosa è andato storto...">'+esc(e.txt)+'</textarea>'+
+
+       '<div class="mt"><label>Umore</label><div class="moodrow" id="jmood">';
+  NQ.MOODS.forEach(function(m,i){
+    h+='<button type="button" class="'+(e.mood===i?'on':'')+'" onclick="NQ.setMood('+i+')">'+m+'</button>';
+  });
+  h+='</div></div>'+
+
+       '<div class="mt"><label>Meteo</label><div class="moodrow" id="jwx">';
+  NQ.WEATHER.forEach(function(w,i){
+    h+='<button type="button" class="'+(e.wx===i?'on':'')+'" onclick="NQ.setWx('+i+')">'+w+'</button>';
+  });
+  h+='</div></div>'+
+
+       '<div class="mt"><label>Chilometri reali</label>'+
+       '<input type="number" id="jkm" inputmode="numeric" placeholder="km percorsi oggi" value="'+esc(e.km)+'"></div>'+
+
+       '<div class="row mt">'+
+         '<button class="pxbtn go" onclick="NQ.saveJournal()">💾 Salva</button>'+
+         '<label class="pxbtn" style="cursor:pointer;margin:0;text-transform:uppercase">'+
+           '📷 Foto<input type="file" id="jphoto" accept="image/*" multiple style="display:none" onchange="NQ.addPhotos(event)">'+
+         '</label>'+
+       '</div>'+
+       '<div class="photos" id="jphotos"></div>'+
+       '<div class="storagebar" id="jstorage"></div>'+
+     '</div>';
+
+  h+='<div class="pxbox lo"><h3>Album e backup</h3>'+
+       '<p class="small muted">Le foto restano intatte, alla risoluzione con cui le hai scattate. '+
+       'L\'album è un archivio .zip con dentro una pagina sfogliabile, le foto originali '+
+       'e i dati: si apre ovunque e non ha bisogno di questa app.</p>'+
+       '<div class="row">'+
+         '<button class="pxbtn go" onclick="NQ.exportZIP()">📦 Scarica l\'album</button>'+
+         '<button class="pxbtn" onclick="NQ.exportJSON()">⬇ Solo dati .json</button>'+
+       '</div>'+
+       '<div class="row mt">'+
+         '<label class="pxbtn" style="cursor:pointer;margin:0;text-transform:uppercase">'+
+           '⬆ Ripristina<input type="file" accept=".zip,.json,application/zip,application/json" style="display:none" onchange="NQ.importBackup(event)">'+
+         '</label>'+
+       '</div>'+
+       '<p class="small muted mt" style="margin-bottom:0">Il ripristino accetta sia l\'album .zip '+
+       '(dati e foto) sia il .json (solo dati). Fallo ogni tanto: la memoria del browser '+
+       'non è un posto sicuro dove tenere quindici giorni di viaggio.</p>'+
+     '</div>';
+
+  $('#v-journal').innerHTML=h;
+  loadPhotos(jDay);
+  NQ.showStorage();
+};
+
+/* Mood e meteo ridisegnano la vista: senza questo, il testo
+   ancora non salvato nella textarea andrebbe perso. */
+function grab(){
+  var s=d();
+  var e=s.journal[jDay]||{txt:'',km:''};
+  var t=$('#jtxt'), k=$('#jkm');
+  if(t) e.txt=t.value;
+  if(k) e.km=k.value;
+  s.journal[jDay]=e;
+  return e;
+}
+
+NQ.setMood=function(i){
+  var e=grab();
+  e.mood = e.mood===i? null : i;
+  NQ.store.save(); NQ.renderJournal();
+};
+NQ.setWx=function(i){
+  var e=grab();
+  e.wx = e.wx===i? null : i;
+  NQ.store.save(); NQ.renderJournal();
+};
+
+NQ.saveJournal=function(){
+  var e=grab();
+  e.ts=Date.now();
+  NQ.store.save();
+  NQ.checkTrophies();
+  NQ.renderHud();
+  NQ.toast('Salvato','Giorno '+jDay+' aggiornato');
+};
+
+NQ.addPhotos=function(ev){
+  var files=Array.prototype.slice.call(ev.target.files||[]);
+  if(!files.length) return;
+  var s=d(), day=jDay;
+  NQ.toast('','Salvo '+files.length+(files.length===1?' foto…':' foto…'));
+
+  /* La prima volta si chiede al browser di non buttare via i dati:
+     senza, IndexedDB è sacrificabile quando lo spazio scarseggia. */
+  NQ.persistStorage();
+
+  files.reduce(function(chain,f){
+    return chain.then(function(){
+      return NQ.makeThumb(f).then(function(t){
+        var rec={ id:NQ.uid(), day:day, ts:Date.now(),
+                  blob:f, thumb:t.thumb, w:t.w, h:t.h,
+                  bytes:f.size, name:f.name||'foto.jpg', type:f.type||'image/jpeg' };
+        return NQ.photos.put(rec).then(function(){
+          s.photos.push({ id:rec.id, day:day, ts:rec.ts, bytes:rec.bytes });
+        });
+      });
+    });
+  }, Promise.resolve()).then(function(){
+    NQ.store.save();
+    NQ.checkTrophies();
+    NQ.renderHud();
+    loadPhotos(day);
+    NQ.toast('Fatto', files.length+' foto salvate a piena risoluzione');
+  }).catch(function(err){
+    NQ.toast('Non salvate', err.name==='QuotaExceededError'
+      ? 'Spazio esaurito. Scarica l\'album e libera memoria.'
+      : 'Errore: '+err.message);
+  });
+  ev.target.value='';
+};
+
+/* La griglia mostra le miniature. Gli originali restano in IndexedDB e
+   escono solo nell'album o aprendo la foto a schermo intero. */
+function loadPhotos(day){
+  var host=$('#jphotos'); if(!host) return;
+  var ids=d().photos.filter(function(p){return p.day===day;});
+  if(!ids.length){ host.innerHTML=''; return; }
+  Promise.all(ids.map(function(p){ return NQ.photos.get(p.id); })).then(function(recs){
+    host.innerHTML = recs.filter(Boolean).map(function(r){
+      var dim = r.w? r.w+'×'+r.h : '';
+      var kb  = r.bytes? ' · '+Math.round(r.bytes/1024)+' KB' : '';
+      return '<figure>'+
+        '<button class="open" onclick="NQ.openPhoto(\''+r.id+'\')" '+
+          'title="'+esc(dim+kb)+'" aria-label="Apri a piena risoluzione">'+
+          '<img src="'+(r.thumb||r.url)+'" alt=""></button>'+
+        (dim? '<figcaption>'+esc(dim)+'</figcaption>':'')+
+        '<button class="del" onclick="NQ.delPhoto(\''+r.id+'\')" aria-label="Elimina">✕</button>'+
+      '</figure>';
+    }).join('');
+  });
+}
+
+NQ.openPhoto=function(id){
+  NQ.photos.get(id).then(function(r){
+    if(!r) return;
+    var url = r.blob? URL.createObjectURL(r.blob) : r.url;
+    var w=window.open(url,'_blank');
+    if(!w) NQ.toast('Bloccato','Il browser ha bloccato la finestra. Consenti i popup per aprire le foto.');
+    if(r.blob) setTimeout(function(){ URL.revokeObjectURL(url); }, 60000);
+  });
+};
+
+NQ.delPhoto=function(id){
+  var s=d();
+  NQ.photos.del(id).then(function(){
+    s.photos=s.photos.filter(function(p){return p.id!==id;});
+    NQ.store.save();
+    NQ.renderHud();
+    loadPhotos(jDay);
+    NQ.showStorage();
+  });
+};
+
+/* Riga di stato dello spazio: su quindici giorni di foto a piena
+   risoluzione è l'informazione che serve prima che sia troppo tardi. */
+NQ.showStorage=function(){
+  var host=$('#jstorage'); if(!host) return;
+  var s=d();
+  var mine=s.photos.reduce(function(a,p){ return a+(p.bytes||0); },0);
+  NQ.storageInfo().then(function(info){
+    var txt='<b>'+s.photos.length+'</b> foto · <b>'+(mine/1048576).toFixed(1)+' MB</b>';
+    if(info && info.quota){
+      var pct=Math.round(info.used/info.quota*100);
+      txt += ' — usato '+(info.used/1048576).toFixed(0)+' MB di '+
+             (info.quota/1073741824).toFixed(1)+' GB disponibili ('+pct+'%)';
+      if(pct>80) txt += ' <b style="color:var(--red)">⚠ quasi pieno</b>';
+    }
+    host.innerHTML=txt;
+  });
+};
+
+/* ============================================================
+   TESORO — spese condivise
+   Chi ha anticipato cosa, quanto spetta a ciascuno, e come si pareggia.
+   Le spese fatte prima di partire (camper, voli, prenotazioni) stanno
+   nel giorno 0.
+   ============================================================ */
+
+var splitSel = null;     // partecipanti selezionati nel modulo di inserimento
+var expFilter = 'all';   // all | pre | trip
+
+function dayLabel(n){ return n===0? 'Pre' : 'G'+n; }
+function dayName(n){
+  if(n===0) return 'Prima della partenza';
+  var dd=dayByN(n);
+  return 'Giorno '+n+' · '+dd.to;
+}
+
+function totalOf(list){ return list.reduce(function(a,e){ return a+e.nok; },0); }
+
+NQ.renderMoney=function(){
+  var s=d(), r=rate(), people=s.people;
+  var tot=totalOf(s.exp);
+  var pre=s.exp.filter(function(e){ return e.day===0; });
+  var trip=s.exp.filter(function(e){ return e.day>0; });
+
+  if(!splitSel) splitSel = people.map(function(p){ return p.id; });
+
+  var h='';
+
+  /* ---- totale ---- */
+  var elapsed = NQ.phase()==='pre'? 0 : NQ.phase()==='post'? 15 : Math.max(1,NQ.dayIndex()+1);
+  h+='<div class="pxbox total">'+
+       '<div class="amt money">'+nok(tot)+' kr</div>'+
+       '<div class="sub">≈ <b>'+NQ.eur(tot,r)+' €</b>'+
+         (people.length>1? ' · '+nok(tot/people.length)+' kr a testa':'')+'</div>'+
+       (pre.length? '<div class="sub small">di cui '+nok(totalOf(pre))+' kr spesi prima di partire</div>':'')+
+       (elapsed&&trip.length? '<div class="sub small">'+nok(totalOf(trip)/elapsed)+' kr al giorno in viaggio</div>':'')+
+     '</div>';
+
+  /* ---- budget ---- */
+  if(s.budget){
+    var left=s.budget-tot, pct=Math.max(0,Math.min(100,Math.round(tot/s.budget*100)));
+    h+='<div class="pxbox"><div class="catrow">'+
+         '<div class="cl"><span>Budget '+nok(s.budget)+' kr</span>'+
+         '<span class="money" style="color:'+(left<0?'var(--red)':'var(--green)')+'">'+
+         (left<0? 'sforato di '+nok(-left) : 'restano '+nok(left))+' kr</span></div>'+
+         '<div class="cbar"><div class="cfill" style="width:'+pct+'%;background:'+
+         (left<0?'var(--red)':'var(--green)')+'"></div></div>'+
+       '</div></div>';
+  }
+
+  /* ---- conti fra le persone ---- */
+  if(people.length>1){
+    var bal=NQ.balances(), moves=NQ.settle();
+    h+='<div class="pxbox"><h3>Come siamo messi</h3><div class="bal">';
+    bal.forEach(function(b){
+      var cls = b.net>0.5? 'up' : b.net<-0.5? 'down' : '';
+      h+='<div class="balrow">'+
+           '<span class="bn">'+esc(b.name)+'</span>'+
+           '<span class="bd">ha anticipato <b class="money">'+nok(b.paid)+'</b> · gli spetta <b class="money">'+nok(b.owed)+'</b></span>'+
+           '<span class="bnet '+cls+' money">'+(b.net>0?'+':'')+nok(b.net)+'</span>'+
+         '</div>';
+    });
+    h+='</div>';
+
+    if(!s.exp.length){
+      h+='<p class="small muted" style="margin:12px 0 0">Registra la prima spesa e qui compare chi deve dare quanto a chi.</p>';
+    } else if(!moves.length){
+      h+='<div class="settled">✓ Siete pari. Nessuno deve niente a nessuno.</div>';
+    } else {
+      h+='<h4 class="mt">Per pareggiare</h4><div class="settle">';
+      moves.forEach(function(m){
+        h+='<div class="setrow">'+
+             '<span class="sfrom">'+esc(m.from)+'</span>'+
+             '<span class="sarr">→</span>'+
+             '<span class="sto">'+esc(m.to)+'</span>'+
+             '<span class="samt money">'+nok(m.nok)+' kr <s>≈ '+NQ.eur(m.nok,r)+' €</s></span>'+
+           '</div>';
+      });
+      h+='</div>';
+    }
+    h+='</div>';
+  }
+
+  /* ---- grafico per categoria ---- */
+  var byCat={};
+  s.exp.forEach(function(e){ byCat[e.cat]=(byCat[e.cat]||0)+e.nok; });
+  var cats=Object.keys(NQ.CATS)
+    .filter(function(k){ return byCat[k]; })
+    .sort(function(a,b){ return byCat[b]-byCat[a]; });
+
+  if(cats.length){
+    var maxCat=byCat[cats[0]];
+    h+='<div class="pxbox"><h3>Dove sono finiti i soldi</h3><div class="chart">';
+    cats.forEach(function(k){
+      var c=NQ.CATS[k], v=byCat[k];
+      h+='<div class="crow">'+
+           '<div class="cl"><span>'+c.icon+' '+esc(c.name)+'</span>'+
+           '<span class="money">'+nok(v)+' kr <s>'+Math.round(v/tot*100)+'%</s></span></div>'+
+           '<div class="cbar"><div class="cfill" style="width:'+Math.max(2,Math.round(v/maxCat*100))+'%;background:'+c.color+'"></div></div>'+
+         '</div>';
+    });
+    h+='</div></div>';
+  }
+
+  /* ---- grafico per giorno, impilato per categoria ---- */
+  if(s.exp.length){
+    var byDay=[];
+    for(var n=0;n<=15;n++){
+      var list=s.exp.filter(function(e){ return e.day===n; });
+      var per={};
+      list.forEach(function(e){ per[e.cat]=(per[e.cat]||0)+e.nok; });
+      byDay.push({ n:n, tot:totalOf(list), per:per });
+    }
+    var maxDay=Math.max.apply(null, byDay.map(function(x){return x.tot;}).concat([1]));
+
+    h+='<div class="pxbox"><h3>Quanto è costato ogni giorno</h3>'+
+       '<div class="daychart">';
+    byDay.forEach(function(dd){
+      var tip = dayName(dd.n)+' — '+nok(dd.tot)+' kr';
+      h+='<div class="dcol" title="'+esc(tip)+'"><div class="dstack">';
+      Object.keys(NQ.CATS).forEach(function(k){
+        var v=dd.per[k]; if(!v) return;
+        h+='<div class="dseg" style="height:'+(v/maxDay*100)+'%;background:'+NQ.CATS[k].color+'"></div>';
+      });
+      h+='</div><div class="dlab'+(dd.n===0?' pre':'')+'">'+dayLabel(dd.n)+'</div></div>';
+    });
+    h+='</div><p class="small muted" style="margin:10px 0 0">Colonne impilate per categoria, stessi colori del grafico sopra. '+
+       'La prima è tutto quello che avete pagato prima di partire.</p></div>';
+  }
+
+  /* ---- inserimento ---- */
+  h+='<div class="pxbox"><h3>Aggiungi spesa</h3>'+
+       '<div class="row">'+
+         '<div style="flex:2"><label for="exLabel">Descrizione</label><input type="text" id="exLabel" placeholder="Es. traghetto Lavik"></div>'+
+         '<div style="flex:1"><label for="exAmt">Importo</label><input type="number" id="exAmt" inputmode="decimal" placeholder="0"></div>'+
+       '</div>'+
+       '<div class="row mt">'+
+         '<div><label for="exCur">Valuta</label><select id="exCur"><option value="nok">NOK</option><option value="eur">EUR</option></select></div>'+
+         '<div><label for="exCat">Categoria</label><select id="exCat">';
+  Object.keys(NQ.CATS).forEach(function(k){
+    h+='<option value="'+k+'">'+NQ.CATS[k].icon+' '+esc(NQ.CATS[k].name)+'</option>';
+  });
+  h+='</select></div>'+
+         '<div><label for="exDay">Quando</label><select id="exDay">'+
+           '<option value="0">Prima di partire</option>';
+  var cur = NQ.dayIndex()>=0? NQ.DAYS[NQ.dayIndex()].n : (NQ.phase()==='pre'? 0 : 15);
+  NQ.DAYS.forEach(function(dd){
+    h+='<option value="'+dd.n+'"'+(dd.n===cur?' selected':'')+'>G'+dd.n+' · '+esc(dd.to)+'</option>';
+  });
+  h+='</select></div>'+
+       '</div>';
+
+  if(people.length>1){
+    h+='<div class="row mt">'+
+         '<div><label for="exPayer">Chi ha pagato</label><select id="exPayer">';
+    people.forEach(function(p,i){
+      h+='<option value="'+p.id+'"'+(i===0?' selected':'')+'>'+esc(p.name)+'</option>';
+    });
+    h+='</select></div></div>'+
+       '<div class="mt"><label>Divisa tra</label><div class="moodrow" id="exSplit">';
+    people.forEach(function(p){
+      var on=splitSel.indexOf(p.id)>=0;
+      h+='<button type="button" class="chip'+(on?' on':'')+'" data-p="'+p.id+'" '+
+         'aria-pressed="'+on+'" onclick="NQ.toggleSplit(this)">'+esc(p.name)+'</button>';
+    });
+    h+='</div></div>';
+  }
+
+  h+='<button class="pxbtn go mt" onclick="NQ.addExpense()">+ Registra</button>'+
+       '<div class="mt"><label>Scorciatoie</label><div class="preset">';
+  NQ.PRESETS.forEach(function(p,i){
+    h+='<button onclick="NQ.quickExpense('+i+')">'+p[0]+' '+esc(p[1])+' <b>'+nok(p[2])+'</b></button>';
+  });
+  h+='</div></div></div>';
+
+  /* ---- movimenti ---- */
+  if(s.exp.length){
+    var shown = expFilter==='pre'? pre : expFilter==='trip'? trip : s.exp;
+    h+='<div class="pxbox"><h3>Movimenti ('+s.exp.length+')</h3>'+
+       '<div class="seg">'+
+         segBtn('all','Tutte',s.exp.length)+
+         segBtn('pre','Prima di partire',pre.length)+
+         segBtn('trip','In viaggio',trip.length)+
+       '</div><div class="exlist">';
+    shown.slice().reverse().forEach(function(e){
+      var c=NQ.CATS[e.cat]||NQ.CATS.altro;
+      var who=(people.filter(function(p){return p.id===e.payer;})[0]||{}).name;
+      var part = e.split.length<people.length
+        ? ' · solo '+e.split.map(function(id){
+            return (people.filter(function(p){return p.id===id;})[0]||{}).name; }).join(', ')
+        : '';
+      h+='<div class="exrow">'+
+           '<span class="ei" style="color:'+c.color+'">'+c.icon+'</span>'+
+           '<span class="en">'+esc(e.label)+
+             (people.length>1? '<s>'+esc(who||'?')+esc(part)+'</s>':'')+'</span>'+
+           '<span class="ed">'+dayLabel(e.day)+'</span>'+
+           '<span class="ea money">'+nok(e.nok)+' kr</span>'+
+           '<button class="ex" onclick="NQ.delExpense(\''+e.id+'\')" aria-label="Elimina">✕</button>'+
+         '</div>';
+    });
+    if(!shown.length) h+='<p class="small muted">Niente in questo filtro.</p>';
+    h+='</div></div>';
+  }
+
+  /* ---- impostazioni ---- */
+  h+='<div class="pxbox"><h3>Impostazioni</h3>';
+  h+='<label>Chi divide le spese</label><div class="peoplelist">';
+  people.forEach(function(p){
+    h+='<div class="prow">'+
+         '<input type="text" value="'+esc(p.name)+'" aria-label="Nome" onchange="NQ.setPerson(\''+p.id+'\',this.value)">'+
+         (people.length>1? '<button class="pxbtn sm" onclick="NQ.delPerson(\''+p.id+'\')" aria-label="Togli">✕</button>':'')+
+       '</div>';
+  });
+  h+='</div><button class="pxbtn sm mt" onclick="NQ.addPerson()">+ Aggiungi persona</button>';
+
+  h+='<div class="row mt">'+
+       '<div><label for="exRate">Cambio: NOK per 1 €</label><input type="number" step="0.01" id="exRate" value="'+r+'" onchange="NQ.setRate(this.value)"></div>'+
+       '<div><label for="exBud">Budget totale in NOK</label><input type="number" id="exBud" placeholder="nessuno" value="'+(s.budget||'')+'" onchange="NQ.setBudget(this.value)"></div>'+
+     '</div>'+
+     '<p class="small muted mt" style="margin-bottom:0">Il cambio è fisso e funziona offline. Aggiornalo a mano quando hai campo.</p></div>';
+
+  $('#v-money').innerHTML=h;
+};
+
+function segBtn(id,label,count){
+  return '<button class="'+(expFilter===id?'on':'')+'" onclick="NQ.setExpFilter(\''+id+'\')">'+
+         esc(label)+' <s>'+count+'</s></button>';
+}
+NQ.setExpFilter=function(f){ expFilter=f; NQ.renderMoney(); };
+
+NQ.toggleSplit=function(btn){
+  var id=btn.dataset.p, i=splitSel.indexOf(id);
+  if(i>=0){
+    if(splitSel.length===1) return;      // qualcuno deve pur pagarla
+    splitSel.splice(i,1);
+  } else splitSel.push(id);
+  btn.classList.toggle('on', splitSel.indexOf(id)>=0);
+  btn.setAttribute('aria-pressed', splitSel.indexOf(id)>=0);
+};
+
+NQ.addExpense=function(){
+  var label=$('#exLabel').value.trim();
+  var amt=parseFloat($('#exAmt').value);
+  if(!amt || amt<=0){ NQ.toast('','Manca l\'importo'); return; }
+  var cur=$('#exCur').value;
+  var payerEl=$('#exPayer');
+  push(label||'Spesa',
+       cur==='eur'? amt*rate() : amt,
+       $('#exCat').value,
+       +$('#exDay').value,
+       payerEl? payerEl.value : d().people[0].id,
+       splitSel.slice());
+  $('#exLabel').value=''; $('#exAmt').value='';
+};
+
+NQ.quickExpense=function(i){
+  var p=NQ.PRESETS[i], s=d();
+  var day = NQ.dayIndex()>=0? NQ.DAYS[NQ.dayIndex()].n : (NQ.phase()==='pre'? 0:15);
+  var payerEl=$('#exPayer');
+  push(p[1], p[2], p[3], day,
+       payerEl? payerEl.value : s.people[0].id,
+       splitSel? splitSel.slice() : s.people.map(function(x){return x.id;}));
+};
+
+function push(label,nokAmt,cat,day,payer,split){
+  var s=d();
+  s.exp.push({ id:NQ.uid(), label:label, nok:Math.round(nokAmt), cat:cat,
+               day:day, payer:payer, split:split, ts:Date.now() });
+  NQ.store.save();
+  NQ.checkTrophies();
+  NQ.renderHud();
+  NQ.renderMoney();
+  NQ.toast('Registrata', label+' · '+nok(nokAmt)+' kr');
+}
+
+NQ.delExpense=function(id){
+  var s=d();
+  s.exp=s.exp.filter(function(e){ return e.id!==id; });
+  NQ.store.save(); NQ.renderMoney();
+};
+
+NQ.setPerson=function(id,name){
+  var s=d(), p=s.people.filter(function(x){return x.id===id;})[0];
+  if(!p) return;
+  p.name=(name||'').trim()||'Senza nome';
+  NQ.store.save(); NQ.renderMoney();
+};
+
+NQ.addPerson=function(){
+  var s=d();
+  if(s.people.length>=6){ NQ.toast('','Sei persone bastano'); return; }
+  var id='p'+(Date.now().toString(36));
+  s.people.push({ id:id, name:'Persona '+(s.people.length+1) });
+  splitSel.push(id);
+  NQ.store.save(); NQ.renderMoney();
+};
+
+NQ.delPerson=function(id){
+  var s=d();
+  if(s.people.length<=1) return;
+  var used=s.exp.filter(function(e){ return e.payer===id || e.split.indexOf(id)>=0; }).length;
+  if(used){
+    NQ.toast('Non si può', 'Questa persona compare in '+used+' spese. Cancellale o riassegnale prima.');
+    return;
+  }
+  s.people=s.people.filter(function(p){ return p.id!==id; });
+  splitSel=splitSel.filter(function(x){ return x!==id; });
+  if(!splitSel.length) splitSel=s.people.map(function(p){ return p.id; });
+  NQ.store.save(); NQ.renderMoney();
+};
+
+NQ.setRate=function(v){
+  var n=parseFloat(v);
+  if(n>0){ d().rate=n; NQ.store.save(); NQ.renderMoney(); }
+};
+NQ.setBudget=function(v){
+  var n=parseFloat(v);
+  d().budget = n>0? n : null;
+  NQ.store.save(); NQ.renderMoney();
+};
+
+/* ============================================================
+   MANUALE DEL VICHINGO
+   ============================================================ */
+
+NQ.renderGuide=function(){
+  var h='<div class="pxbox lo"><h2>Manuale del vichingo</h2>'+
+        '<p class="small muted" style="margin:0">Le cose pratiche che servono davvero, '+
+        'verificate a luglio 2026. Funziona tutto senza rete.</p></div>';
+
+  NQ.GUIDE.forEach(function(g,i){
+    h+='<details class="acc"'+(i===0?' open':'')+'>'+
+         '<summary><span class="gi">'+g.icon+'</span>'+esc(g.title)+'</summary>'+
+         '<div class="accb">';
+    if(g.body) g.body.forEach(function(p){ h+='<p>'+p+'</p>'; });   // HTML voluto nei testi guida
+    if(g.phrases){
+      h+='<table class="ph">';
+      g.phrases.forEach(function(p){ h+='<tr><td>'+esc(p[0])+'</td><td>'+esc(p[1])+'</td></tr>'; });
+      h+='</table>';
+      h+='<h4 class="mt">Cartelli da riconoscere</h4><table class="ph">';
+      g.signs.forEach(function(p){ h+='<tr><td>'+esc(p[0])+'</td><td>'+esc(p[1])+'</td></tr>'; });
+      h+='</table>';
+    }
+    h+='</div></details>';
+  });
+
+  h+='<div class="pxbox lo mt"><h3>Numeri utili</h3>'+
+       '<div class="chain">'+
+         '<div class="ci"><div class="cl">112</div><div>Polizia — funziona senza SIM e senza credito</div></div>'+
+         '<div class="ci"><div class="cl">113</div><div>Ambulanza e soccorso medico</div></div>'+
+         '<div class="ci"><div class="cl">110</div><div>Vigili del fuoco</div></div>'+
+         '<div class="ci"><div class="cl">yr.no</div><div>Meteo nazionale, il più affidabile in montagna</div></div>'+
+       '</div></div>';
+
+  h+='<div class="pxbox"><h3>Dati e impostazioni</h3>'+
+       '<p class="small muted">Tutto quello che scrivi resta in questo browser, su questo dispositivo. '+
+       'Niente server, niente account, nessun dato che esce da qui.</p>'+
+       '<div class="row">'+
+         '<button class="pxbtn" onclick="NQ.exportZIP()">📦 Scarica l\'album</button>'+
+         '<button class="pxbtn warn" onclick="NQ.wipe()">🗑 Cancella tutto</button>'+
+       '</div>'+
+     '</div>';
+
+  h+='<div class="pxbox lo"><h3>Fonti</h3><p class="srcnote">'+
+     'Itinerario dal foglio di viaggio originale. Dati pratici verificati a luglio 2026 su: '+
+     'trolltunga.com (navette e parcheggi), gjende.no (traghetti Besseggen), '+
+     'preikestolen365.com, lysefjorden365.com, fjordnorway.com, '+
+     'bomreise.no e norgeguide.com (traghetti, pedaggi, prezzi 2026), wecamp.no (sosta libera). '+
+     'Prezzi e orari cambiano: verifica sul posto quando hai connessione.'+
+     '</p></div>';
+
+  $('#v-guide').innerHTML=h;
+};
+
+})();
+
+
+/* ==== app.js ================================================== */
+/* ============================================================
+   NORGE QUEST — APP
+   Routing, HUD, import/export.
+   ============================================================ */
+
+(function(){
+'use strict';
+
+var $=NQ.$, esc=NQ.esc;
+
+var VIEWS={
+  map:    { el:'#v-map',     render:NQ.renderMap,     music:'route', tab:'map'   },
+  trek:   { el:'#v-trek',    render:NQ.renderTreks,   music:'boss',  tab:'trek'  },
+  journal:{ el:'#v-journal', render:NQ.renderJournal, music:'route', tab:'journal'},
+  money:  { el:'#v-money',   render:NQ.renderMoney,   music:'route', tab:'money' },
+  guide:  { el:'#v-guide',   render:NQ.renderGuide,   music:'route', tab:'guide' },
+  day:    { el:'#v-day',     render:null,             music:null,    tab:null    }
+};
+
+var lastTab='map';
+
+NQ.go=function(name, arg, prerendered){
+  var v=VIEWS[name]; if(!v) return;
+
+  if(name!=='map') NQ.map.stop();
+  if(v.render && !prerendered) v.render(arg);
+
+  NQ.$$('.view').forEach(function(el){ el.classList.remove('active'); });
+  $(v.el).classList.add('active');
+
+  if(v.tab) lastTab=v.tab;
+  NQ.$$('#tabs button').forEach(function(b){
+    b.classList.toggle('active', b.dataset.v===lastTab);
+  });
+
+  if(v.music) NQ.chip.want(v.music);
+  window.scrollTo(0,0);
+};
+
+/* ---------- audio ---------- */
+
+NQ.toggleMute=function(){
+  var s=NQ.store.d;
+  s.mute=!s.mute;
+  NQ.store.save();
+  NQ.chip.setMute(s.mute);
+  NQ.renderHud();
+  if(!s.mute) NQ.toast('Musica','Chiptune originale, non è Pokémon');
+};
+
+/* ---------- download ---------- */
+
+function download(name, mime, text){
+  var blob=new Blob([text],{type:mime});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');
+  a.href=url; a.download=name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(function(){ URL.revokeObjectURL(url); },2000);
+}
+
+/* ---------- helper ---------- */
+
+function extOf(type, name){
+  var m=/\.([a-z0-9]{2,5})$/i.exec(name||'');
+  if(m) return m[1].toLowerCase();
+  if(/png/.test(type))  return 'png';
+  if(/heic/.test(type)) return 'heic';
+  if(/webp/.test(type)) return 'webp';
+  return 'jpg';
+}
+
+/* i vecchi record tenevano la foto come dataURL: qui torna binaria */
+function dataURLtoBlob(url){
+  var i=url.indexOf(','), head=url.slice(0,i);
+  var bin=atob(url.slice(i+1));
+  var u8=new Uint8Array(bin.length);
+  for(var k=0;k<bin.length;k++) u8[k]=bin.charCodeAt(k);
+  return new Blob([u8], { type:(/data:([^;]+)/.exec(head)||[,'image/jpeg'])[1] });
+}
+
+function photoBlob(r){
+  return r.blob ? r.blob : r.url ? dataURLtoBlob(r.url) : null;
+}
+
+/* ---------- backup dei soli dati ---------- */
+
+NQ.exportJSON=function(){
+  var payload={
+    app:'norge-quest', v:2, exported:new Date().toISOString(),
+    state:NQ.store.d
+  };
+  download('norge-quest-dati-'+NQ.today+'.json','application/json',JSON.stringify(payload,null,1));
+  NQ.toast('Dati esportati','Diario, spese e conti. Le foto stanno nell\'album .zip');
+};
+
+/* ---------- album completo ---------- */
+/* Un .zip con dentro una pagina sfogliabile, le foto originali e i dati.
+   Le foto a piena risoluzione dentro un singolo HTML in base64 farebbero
+   centinaia di megabyte e nessun browser lo aprirebbe. */
+
+NQ.exportZIP=function(){
+  NQ.toast('','Preparo l\'album…');
+
+  NQ.photos.all().then(function(recs){
+    var s=NQ.store.d;
+    recs.sort(function(a,b){ return (a.day-b.day) || (a.ts-b.ts); });
+
+    var files=[], byDay={}, seq={};
+    recs.forEach(function(r){
+      var blob=photoBlob(r); if(!blob) return;
+      seq[r.day]=(seq[r.day]||0)+1;
+      var name='foto/g'+NQ.pad2(r.day)+'-'+seq[r.day]+'.'+extOf(r.type,r.name);
+      files.push({ name:name, data:blob });
+      (byDay[r.day]=byDay[r.day]||[]).push({ file:name, w:r.w, h:r.h });
+    });
+
+    files.push({ name:'index.html', data:albumHTML(s, byDay) });
+    files.push({ name:'dati.json', data:JSON.stringify({
+      app:'norge-quest', v:2, exported:new Date().toISOString(),
+      state:s, foto:byDay
+    }, null, 1) });
+
+    return NQ.zipCreate(files).then(function(zip){
+      var url=URL.createObjectURL(zip);
+      var a=document.createElement('a');
+      a.href=url; a.download='norvegia-2026-album.zip';
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function(){ URL.revokeObjectURL(url); },4000);
+      NQ.toast('Album pronto',
+        (files.length-2)+' foto · '+(zip.size/1048576).toFixed(1)+' MB. Scompattalo e apri index.html', true);
+    });
+  }).catch(function(e){
+    NQ.toast('Non riuscito','Album non creato: '+e.message);
+  });
+};
+
+function albumHTML(s, byDay){
+  var tot=s.exp.reduce(function(a,e){ return a+e.nok; },0);
+  var totKm=Object.keys(s.journal).reduce(function(a,k){
+    return a+(parseFloat(s.journal[k].km)||0);
+  },0);
+  var nFoto=Object.keys(byDay).reduce(function(a,k){ return a+byDay[k].length; },0);
+
+  var h='<!doctype html><html lang="it"><head><meta charset="utf-8">'+
+    '<meta name="viewport" content="width=device-width,initial-scale=1">'+
+    '<title>Norvegia in van — 1/15 agosto 2026</title><style>'+
+    'body{margin:0;background:#0b1622;color:#dbe9f7;font:16px/1.65 Georgia,serif;padding:0 0 70px}'+
+    '.w{max-width:820px;margin:0 auto;padding:0 20px}'+
+    'header{text-align:center;padding:60px 20px 38px;border-bottom:3px solid #2e5580;margin-bottom:40px}'+
+    'h1{font-size:36px;margin:0 0 8px;letter-spacing:.02em}'+
+    '.sub{color:#7d97b3;font-size:14px;letter-spacing:.18em;text-transform:uppercase}'+
+    '.stats{display:flex;gap:30px;justify-content:center;margin-top:28px;flex-wrap:wrap}'+
+    '.stat b{display:block;font-size:27px;color:#f5c542}'+
+    '.stat s{text-decoration:none;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#7d97b3}'+
+    'article{margin-bottom:52px;padding-bottom:40px;border-bottom:2px solid #1d3550}'+
+    'h2{font-size:24px;margin:0 0 4px}'+
+    '.meta{color:#7d97b3;font-size:13px;margin-bottom:18px}'+
+    '.entry{white-space:pre-wrap;margin-bottom:20px}'+
+    '.none{color:#546b83;font-style:italic}'+
+    '.ph{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}'+
+    '.ph a{display:block}.ph img{width:100%;display:block;background:#16283d}'+
+    'table{width:100%;border-collapse:collapse;font-size:14px;margin-top:10px}'+
+    'td{padding:7px 8px;border-bottom:1px solid #1d3550}'+
+    'td:last-child{text-align:right;font-variant-numeric:tabular-nums}'+
+    'footer{text-align:center;color:#546b83;font-size:13px;padding-top:24px}'+
+    '</style></head><body><header>'+
+    '<h1>Norvegia in van</h1><div class="sub">1 — 15 agosto 2026</div>'+
+    '<div class="stats">'+
+      '<div class="stat"><b>'+Object.keys(s.done).filter(function(k){return s.done[k];}).length+'</b><s>giorni</s></div>'+
+      '<div class="stat"><b>'+Object.keys(s.trophies).length+'</b><s>trofei</s></div>'+
+      '<div class="stat"><b>'+nFoto+'</b><s>foto</s></div>'+
+      (totKm? '<div class="stat"><b>'+NQ.nok(totKm)+'</b><s>km</s></div>':'')+
+      (tot?   '<div class="stat"><b>'+NQ.nok(tot)+'</b><s>corone spese</s></div>':'')+
+    '</div></header><div class="w">';
+
+  NQ.DAYS.forEach(function(day){
+    var e=s.journal[day.n]||{}, ph=byDay[day.n]||[];
+    if(!(e.txt||'').trim() && !ph.length) return;
+    h+='<article><h2>Giorno '+day.n+' — '+esc(day.title)+'</h2>'+
+       '<div class="meta">'+esc(day.from)+' → '+esc(day.to)+' · '+esc(day.date)+
+       (e.mood!=null? ' · '+NQ.MOODS[e.mood]:'')+
+       (e.wx!=null? ' '+NQ.WEATHER[e.wx]:'')+
+       (e.km? ' · '+esc(e.km)+' km':'')+'</div>';
+    h+= (e.txt||'').trim()? '<div class="entry">'+esc(e.txt)+'</div>'
+                          : '<div class="entry none">Nessuna nota per questo giorno.</div>';
+    if(ph.length){
+      h+='<div class="ph">'+ph.map(function(p){
+        return '<a href="'+p.file+'" target="_blank"><img src="'+p.file+'" alt="Giorno '+day.n+'" loading="lazy"></a>';
+      }).join('')+'</div>';
+    }
+    h+='</article>';
+  });
+
+  /* i conti, così l'album è anche il rendiconto */
+  if(s.exp.length){
+    var byCat={};
+    s.exp.forEach(function(x){ byCat[x.cat]=(byCat[x.cat]||0)+x.nok; });
+    h+='<article><h2>I conti</h2><table>';
+    Object.keys(NQ.CATS).forEach(function(k){
+      if(!byCat[k]) return;
+      h+='<tr><td>'+NQ.CATS[k].icon+' '+esc(NQ.CATS[k].name)+'</td><td>'+NQ.nok(byCat[k])+' kr</td></tr>';
+    });
+    h+='<tr><td><b>Totale</b></td><td><b>'+NQ.nok(tot)+' kr ≈ '+NQ.eur(tot,s.rate)+' €</b></td></tr></table>';
+
+    if(s.people && s.people.length>1){
+      h+='<table>';
+      NQ.balances().forEach(function(b){
+        h+='<tr><td>'+esc(b.name)+' ha anticipato</td><td>'+NQ.nok(b.paid)+' kr</td></tr>';
+      });
+      h+='</table>';
+    }
+    h+='</article>';
+  }
+
+  return h+'</div><footer>Generato da Norge Quest · '+new Date().toLocaleDateString('it-IT')+'</footer></body></html>';
+}
+
+/* ---------- ripristino ---------- */
+
+NQ.importBackup=function(ev){
+  var f=(ev.target.files||[])[0];
+  ev.target.value='';
+  if(!f) return;
+  var isZip=/\.zip$/i.test(f.name) || f.type==='application/zip';
+  (isZip? restoreZip(f) : restoreJson(f)).catch(function(e){
+    NQ.toast('Non ripristinato', e.message);
+  });
+};
+
+function applyState(state, photos){
+  if(!confirm('Ripristinare questo backup?\n\nI dati attualmente su questo dispositivo verranno sostituiti.'))
+    return Promise.resolve(false);
+  NQ.store.d=state;
+  NQ.store.save();
+  NQ.store.load();     // rilegge dal salvataggio applicando le migrazioni di versione
+  return NQ.photos.clear()
+    .then(function(){ return (photos||[]).reduce(function(c,r){
+      return c.then(function(){ return NQ.photos.put(r); });
+    }, Promise.resolve()); })
+    .then(function(){
+      NQ.chip.setMute(NQ.store.d.mute);
+      NQ.renderHud();
+      NQ.go('journal');
+      NQ.toast('Ripristinato', (photos||[]).length+' foto recuperate');
+      return true;
+    });
+}
+
+function restoreJson(f){
+  return new Promise(function(res,rej){
+    var fr=new FileReader();
+    fr.onerror=function(){ rej(new Error('lettura fallita')); };
+    fr.onload=function(){
+      var p;
+      try{ p=JSON.parse(fr.result); }
+      catch(e){ return rej(new Error('il file non è un backup valido')); }
+      if(!p || p.app!=='norge-quest' || !p.state)
+        return rej(new Error('non è un backup di Norge Quest'));
+      res(applyState(p.state, (p.photos||[]).map(function(r){
+        return r.url && !r.blob ? { id:r.id, day:r.day, ts:r.ts, blob:dataURLtoBlob(r.url) } : r;
+      })));
+    };
+    fr.readAsText(f);
+  });
+}
+
+function restoreZip(f){
+  return NQ.zipRead(f).then(function(entries){
+    var dati=entries.filter(function(e){ return /(^|\/)dati\.json$/.test(e.name); })[0];
+    if(!dati) throw new Error('nell\'archivio non c\'è dati.json');
+
+    var txt = window.TextDecoder? new TextDecoder('utf-8').decode(dati.data)
+                                : String.fromCharCode.apply(null, dati.data);
+    var p=JSON.parse(txt);
+    if(!p.state) throw new Error('archivio senza stato salvato');
+
+    /* si ricostruisce l'associazione foto → giorno dalla mappa salvata */
+    var wanted={};
+    Object.keys(p.foto||{}).forEach(function(day){
+      (p.foto[day]||[]).forEach(function(x){ wanted[x.file]={ day:+day, w:x.w, h:x.h }; });
+    });
+
+    var photos=[];
+    entries.forEach(function(e){
+      var meta=wanted[e.name];
+      if(!meta) return;
+      var type = /\.png$/i.test(e.name)? 'image/png'
+               : /\.webp$/i.test(e.name)? 'image/webp'
+               : /\.heic$/i.test(e.name)? 'image/heic' : 'image/jpeg';
+      var blob=new Blob([e.data.slice()], { type:type });
+      photos.push({ id:NQ.uid(), day:meta.day, ts:Date.now(),
+                    blob:blob, w:meta.w, h:meta.h, bytes:blob.size,
+                    name:e.name.split('/').pop(), type:type });
+    });
+
+    /* i metadati nello stato devono puntare alle foto appena reinserite */
+    p.state.photos = photos.map(function(r){
+      return { id:r.id, day:r.day, ts:r.ts, bytes:r.bytes };
+    });
+
+    return rebuildThumbs(photos).then(function(){ return applyState(p.state, photos); });
+  });
+}
+
+/* le miniature non stanno nell'archivio: si rigenerano al volo */
+function rebuildThumbs(photos){
+  return photos.reduce(function(chain,r){
+    return chain.then(function(){
+      return NQ.makeThumb(r.blob).then(function(t){
+        r.thumb=t.thumb; if(!r.w){ r.w=t.w; r.h=t.h; }
+      }).catch(function(){ /* una miniatura persa non blocca il ripristino */ });
+    });
+  }, Promise.resolve());
+}
+
+NQ.wipe=function(){
+  if(!confirm('Cancellare diario, foto, spese e trofei da questo dispositivo?\n\nNon si torna indietro. Se non hai un backup, annulla e fallo prima.')) return;
+  NQ.store.reset().then(function(){
+    NQ.renderHud();
+    NQ.go('map');
+    NQ.toast('Cancellato','Si riparte da zero');
+  });
+};
+
+/* ============================================================
+   AVVIO
+   ============================================================ */
+
+function boot(){
+  NQ.store.load();
+  NQ.chip.muted = NQ.store.d.mute!==false;
+
+  NQ.$$('#tabs button').forEach(function(b){
+    b.addEventListener('click', function(){ NQ.go(b.dataset.v); });
+  });
+  $('#muteBtn').addEventListener('click', NQ.toggleMute);
+
+  NQ.checkTrophies();
+  NQ.renderHud();
+
+  var ph=NQ.phase(), idx=NQ.dayIndex();
+  NQ.go('map');
+
+  /* in viaggio si apre direttamente sul giorno corrente */
+  if(ph==='live' && idx>=0){
+    setTimeout(function(){ NQ.openDay(NQ.DAYS[idx].n); }, 400);
+  }
+
+  if(!NQ.store.d.seen){
+    NQ.store.d.seen=true; NQ.store.save();
+    setTimeout(function(){
+      NQ.toast('Norge Quest',
+        ph==='pre'? 'Mancano '+NQ.daysTo(NQ.TRIP.start)+' giorni. Tocca un nodo sulla mappa per il briefing di quella tappa.'
+                  : 'Tocca un nodo sulla mappa per aprire la tappa.', true);
+    },700);
+  }
+
+  /* il browser scarica la pagina in background: fermiamo l'animazione */
+  document.addEventListener('visibilitychange', function(){
+    if(document.hidden){ NQ.map.stop(); NQ.chip.stop(); }
+    else if($('#v-map').classList.contains('active')){
+      NQ.map.start();
+      if(!NQ.store.d.mute) NQ.chip.play(NQ.chip.trackName||'route');
+    }
+  });
+}
+
+if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot);
+else boot();
+
+})();
+
+</script>
+</body>
+</html>
