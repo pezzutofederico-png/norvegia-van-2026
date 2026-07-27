@@ -333,12 +333,16 @@ ul.acts li{ margin-bottom:5px; }
 .chart .cl span:last-child{ white-space:nowrap; }
 .chart .cl s{ text-decoration:none; color:var(--ink-faint); margin-left:5px; }
 
-/* colonne per giorno, impilate per categoria */
+/* colonne per giorno: una sola serie, un solo colore */
 .daychart{ display:flex; gap:2px; align-items:stretch; height:132px; }
-.daychart .dcol{ flex:1 1 0; min-width:0; display:flex; flex-direction:column; gap:4px; }
-.daychart .dstack{ flex:1; display:flex; flex-direction:column; justify-content:flex-end; gap:2px;
+.daychart .dcol{ flex:1 1 0; min-width:0; display:flex; flex-direction:column; gap:4px;
+  cursor:help; }
+.daychart .dstack{ flex:1; display:flex; flex-direction:column; justify-content:flex-end;
   background:#08111b; box-shadow:inset 0 0 0 2px var(--line); padding:2px; }
-.daychart .dseg{ width:100%; min-height:2px; }
+.daychart .dseg{ width:100%; min-height:3px; background:#3987e5; }
+.daychart .dseg.top{ background:var(--gold); }
+.daychart .dcol:hover .dseg{ background:#7fb4f0; }
+.daychart .dcol:hover .dseg.top{ background:#ffd970; }
 .daychart .dlab{ font-size:9px; text-align:center; color:var(--ink-faint);
   font-variant-numeric:tabular-nums; }
 .daychart .dlab.pre{ color:var(--gold); }
@@ -1102,36 +1106,26 @@ NQ.TROPHIES = [
   { id:'leggenda',  icon:'👑', name:'Leggenda norrena',   desc:'Tutti e 15 i giorni completati' }
 ];
 
-/* ---------- Preset spese (NOK) ---------- */
-
-NQ.PRESETS = [
-  ['⛽','Pieno gasolio 60L', 1344, 'carburante'],
-  ['🏕','Notte in campeggio', 350, 'campeggio'],
-  ['🛒','Spesa supermercato', 600, 'cibo'],
-  ['🍺','Birra al pub', 120, 'cibo'],
-  ['🍽','Cena fuori', 400, 'cibo'],
-  ['⛴','Traghetto van', 400, 'traghetti'],
-  ['🛣','Pedaggio', 150, 'traghetti'],
-  ['🅿️','Parcheggio Trolltunga P2', 220, 'attivita'],
-  ['🚌','Navetta Mågelitopp', 150, 'attivita'],
-  ['🅿️','Parcheggio Preikestolen', 275, 'attivita'],
-  ['🅿️','Parcheggio Kjerag', 300, 'attivita'],
-  ['⛵','Battello Geirangerfjord', 610, 'attivita'],
-  ['🚂','Flåmsbana a/r', 730, 'attivita']
-];
-
 /* Ordine e colori sono fissi e non vanno rimescolati: l'identità di una
-   categoria è il suo colore. La sequenza passa i controlli di distinguibilità
-   per daltonismo sulla superficie scura della pagina (#16283d) —
-   la coppia peggiore resta a ΔE 8.4, sopra la soglia di 8. */
+   categoria è il suo colore, non la sua posizione in classifica.
+   Gli otto colori sono la sequenza validata per la superficie scura della
+   pagina (#16283d): la coppia adiacente peggiore resta a ΔE 8.4, sopra la
+   soglia di 8 per il daltonismo. "Altro" è il contenitore dei residui e
+   porta di proposito un grigio: non compete per un'identità propria. */
 NQ.CATS = {
-  carburante:{ icon:'⛽', name:'Carburante', color:'#3987e5' },
-  campeggio: { icon:'🏕', name:'Campeggi',   color:'#d95926' },
-  cibo:      { icon:'🍔', name:'Cibo',       color:'#199e70' },
-  traghetti: { icon:'⛴', name:'Traghetti e pedaggi', color:'#c98500' },
-  attivita:  { icon:'🥾', name:'Attività',   color:'#d55181' },
-  altro:     { icon:'🎁', name:'Altro',      color:'#008300' }
+  voli:        { icon:'✈️', name:'Voli',          color:'#3987e5' },
+  noleggio:    { icon:'🚐', name:'Noleggio van',  color:'#d95926' },
+  carburante:  { icon:'⛽', name:'Carburante',    color:'#199e70' },
+  traghetti:   { icon:'⛴', name:'Traghetti e pedaggi', color:'#c98500' },
+  campeggio:   { icon:'🏕', name:'Campeggi',      color:'#d55181' },
+  supermercato:{ icon:'🛒', name:'Supermercato',  color:'#008300' },
+  ristoranti:  { icon:'🍽', name:'Ristoranti',    color:'#9085e9' },
+  esperienze:  { icon:'🥾', name:'Esperienze',    color:'#e66767' },
+  altro:       { icon:'🎁', name:'Altro',         color:'#93a1b0' }
 };
+
+/* Rinomine fra versioni: le spese già registrate non devono perdere categoria. */
+NQ.CATS_RINOMINATE = { cibo:'supermercato', attivita:'esperienze' };
 
 NQ.MOODS = ['😖','😐','🙂','😄','🤩'];
 NQ.WEATHER = ['☀️','⛅','☁️','🌧','⛈','🌫','❄️'];
@@ -1391,7 +1385,7 @@ var Store = {
   d:null,
 
   blank:function(){
-    return { v:2, done:{}, journal:{}, exp:[], photos:[], trophies:{},
+    return { v:3, done:{}, journal:{}, exp:[], photos:[], trophies:{},
              people:[{id:'p1',name:'Io'},{id:'p2',name:'Compagno'}],
              xp:0, rate:NQ.TRIP.rate, budget:null, mute:true, seen:false };
   },
@@ -1415,7 +1409,15 @@ var Store = {
       if(!e.split || !e.split.length) e.split=ids.slice();
       if(e.day==null) e.day=1;
     });
-    this.d.v=2;
+
+    /* v2 → v3: categorie rinominate e spacchettate. Una spesa con una
+       categoria non più esistente finirebbe fuori da ogni grafico. */
+    this.d.exp.forEach(function(e){
+      if(NQ.CATS_RINOMINATE[e.cat]) e.cat=NQ.CATS_RINOMINATE[e.cat];
+      if(!NQ.CATS[e.cat]) e.cat='altro';
+    });
+
+    this.d.v=3;
     return this.d;
   },
 
@@ -3112,7 +3114,12 @@ NQ.renderMoney=function(){
     h+='</div></div>';
   }
 
-  /* ---- grafico per giorno, impilato per categoria ---- */
+  /* ---- grafico per giorno ---- */
+  /* Una sola serie, un solo colore. Impilare nove categorie qui
+     significherebbe affidare l'identità al colore in segmenti senza
+     etichetta, e con nove tinte due coppie diventano indistinguibili
+     per chi ha un deficit di visione dei colori. La composizione si
+     legge nel grafico sopra e nel dettaglio di ogni colonna. */
   if(s.exp.length){
     var byDay=[];
     for(var n=0;n<=15;n++){
@@ -3122,20 +3129,26 @@ NQ.renderMoney=function(){
       byDay.push({ n:n, tot:totalOf(list), per:per });
     }
     var maxDay=Math.max.apply(null, byDay.map(function(x){return x.tot;}).concat([1]));
+    var peak=byDay.filter(function(x){ return x.tot===maxDay; })[0];
 
     h+='<div class="pxbox"><h3>Quanto è costato ogni giorno</h3>'+
        '<div class="daychart">';
     byDay.forEach(function(dd){
       var tip = dayName(dd.n)+' — '+nok(dd.tot)+' kr';
-      h+='<div class="dcol" title="'+esc(tip)+'"><div class="dstack">';
-      Object.keys(NQ.CATS).forEach(function(k){
-        var v=dd.per[k]; if(!v) return;
-        h+='<div class="dseg" style="height:'+(v/maxDay*100)+'%;background:'+NQ.CATS[k].color+'"></div>';
-      });
-      h+='</div><div class="dlab'+(dd.n===0?' pre':'')+'">'+dayLabel(dd.n)+'</div></div>';
+      var det = Object.keys(NQ.CATS).filter(function(k){ return dd.per[k]; })
+        .map(function(k){ return NQ.CATS[k].name+' '+nok(dd.per[k]); });
+      if(det.length) tip += '\n'+det.join('\n');
+      h+='<div class="dcol" title="'+esc(tip)+'">'+
+           '<div class="dstack">'+
+             (dd.tot? '<div class="dseg'+(dd.tot===maxDay?' top':'')+'" style="height:'+
+                      Math.max(3,dd.tot/maxDay*100)+'%"></div>' : '')+
+           '</div>'+
+           '<div class="dlab'+(dd.n===0?' pre':'')+'">'+dayLabel(dd.n)+'</div>'+
+         '</div>';
     });
-    h+='</div><p class="small muted" style="margin:10px 0 0">Colonne impilate per categoria, stessi colori del grafico sopra. '+
-       'La prima è tutto quello che avete pagato prima di partire.</p></div>';
+    h+='</div><p class="small muted" style="margin:10px 0 0">'+
+       (peak && peak.tot? 'Giornata più cara: <b>'+esc(dayName(peak.n))+'</b>, '+nok(peak.tot)+' kr. ' : '')+
+       'Tocca una colonna per il dettaglio per categoria.</p></div>';
   }
 
   /* ---- inserimento ---- */
@@ -3176,12 +3189,7 @@ NQ.renderMoney=function(){
     h+='</div></div>';
   }
 
-  h+='<button class="pxbtn go mt" onclick="NQ.addExpense()">+ Registra</button>'+
-       '<div class="mt"><label>Scorciatoie</label><div class="preset">';
-  NQ.PRESETS.forEach(function(p,i){
-    h+='<button onclick="NQ.quickExpense('+i+')">'+p[0]+' '+esc(p[1])+' <b>'+nok(p[2])+'</b></button>';
-  });
-  h+='</div></div></div>';
+  h+='<button class="pxbtn go mt" onclick="NQ.addExpense()">+ Registra</button></div>';
 
   /* ---- movimenti ---- */
   if(s.exp.length){
@@ -3261,15 +3269,6 @@ NQ.addExpense=function(){
        payerEl? payerEl.value : d().people[0].id,
        splitSel.slice());
   $('#exLabel').value=''; $('#exAmt').value='';
-};
-
-NQ.quickExpense=function(i){
-  var p=NQ.PRESETS[i], s=d();
-  var day = NQ.dayIndex()>=0? NQ.DAYS[NQ.dayIndex()].n : (NQ.phase()==='pre'? 0:15);
-  var payerEl=$('#exPayer');
-  push(p[1], p[2], p[3], day,
-       payerEl? payerEl.value : s.people[0].id,
-       splitSel? splitSel.slice() : s.people.map(function(x){return x.id;}));
 };
 
 function push(label,nokAmt,cat,day,payer,split){
