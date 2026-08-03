@@ -163,17 +163,21 @@ hr{ border:0; height:3px; background:var(--line); margin:16px 0; }
 
 #tabs{
   position:fixed; left:0; right:0; bottom:0; z-index:70;
-  display:grid; grid-template-columns:repeat(5,1fr);
+  display:grid; grid-template-columns:repeat(6,1fr);
   background:var(--bg2);
   box-shadow:0 -4px 0 var(--line), 0 -5px 0 rgba(0,0,0,.5);
 }
 #tabs button{
-  background:none; border:0; cursor:pointer; padding:7px 2px 8px;
+  background:none; border:0; cursor:pointer; padding:7px 1px 8px;
   display:flex; flex-direction:column; align-items:center; gap:2px;
-  color:var(--ink-faint); font-size:9px; letter-spacing:.05em;
-  text-transform:uppercase; min-height:60px; justify-content:center;
+  color:var(--ink-faint); font-size:8px; letter-spacing:.02em;
+  text-transform:uppercase; min-height:58px; justify-content:center;
+  overflow:hidden;
 }
-#tabs button .ti{ font-size:19px; line-height:1; }
+#tabs button .ti{ font-size:18px; line-height:1; }
+@media(min-width:400px){
+  #tabs button{ font-size:9px; letter-spacing:.05em; }
+}
 #tabs button.active{ color:var(--gold); background:var(--panel-lo);
   box-shadow:inset 0 4px 0 var(--gold); }
 
@@ -277,6 +281,9 @@ ul.acts li{ margin-bottom:5px; }
 .bosscard .bh{ padding:13px 14px; background:linear-gradient(180deg,#2a1a2e,#1a1420);
   box-shadow:inset 0 -3px 0 var(--line); }
 .bosscard .bh .bn{ font-size:10px; letter-spacing:.2em; text-transform:uppercase; color:var(--red); }
+/* le camminate portano il verde: si distinguono dai boss a colpo d'occhio */
+.bosscard.walk .bh{ background:linear-gradient(180deg,#1b2e22,#141d18); }
+.bosscard.walk .bh .bn{ color:var(--green); }
 .bosscard .bh h3{ margin:4px 0 3px; color:#fff; font-size:19px; text-transform:none; letter-spacing:0; }
 .bosscard .bh .bs{ font-size:11px; color:var(--ink-dim); }
 .bosscard .bb{ padding:11px 14px; display:flex; gap:16px; flex-wrap:wrap; font-size:11px;
@@ -476,7 +483,7 @@ table.ph td:last-child{ color:var(--ink-dim); }
 
 @media(min-width:720px){
   body{ font-size:15px; padding-bottom:0; }
-  #tabs{ position:sticky; top:0; bottom:auto; grid-template-columns:repeat(5,1fr);
+  #tabs{ position:sticky; top:0; bottom:auto; grid-template-columns:repeat(6,1fr);
     max-width:900px; margin:0 auto; box-shadow:0 4px 0 var(--line); }
   #hud{ position:static; }
   .wrap{ padding:18px 16px 40px; }
@@ -538,6 +545,7 @@ label.pxbtn:focus-within{ outline:4px solid var(--gold); outline-offset:3px; }
 <nav id="tabs">
   <button data-v="map"     class="active"><span class="ti">🗺</span>Mappa</button>
   <button data-v="trek"><span class="ti">⚔</span>Trekking</button>
+  <button data-v="walk"><span class="ti">🥾</span>Cammini</button>
   <button data-v="journal"><span class="ti">📖</span>Diario</button>
   <button data-v="money"><span class="ti">💰</span>Tesoro</button>
   <button data-v="guide"><span class="ti">📜</span>Manuale</button>
@@ -547,6 +555,7 @@ label.pxbtn:focus-within{ outline:4px solid var(--gold); outline-offset:3px; }
   <section id="v-map"     class="view active"></section>
   <section id="v-day"     class="view"></section>
   <section id="v-trek"    class="view"></section>
+  <section id="v-walk"    class="view"></section>
   <section id="v-journal" class="view"></section>
   <section id="v-money"   class="view"></section>
   <section id="v-guide"   class="view"></section>
@@ -578,178 +587,187 @@ var NQ = window.NQ || {};
 NQ.DAYS = [
 {
   n:1, date:'2026-08-01', dow:'sabato',
-  from:'Sandefjord', to:'Gjendesheim', driveMin:255, realMin:270,
-  lat:61.49, lon:8.83, kind:'logistica', xp:100,
+  from:'Sandefjord', to:'Slidrefjorden', driveMin:255, realMin:null,
+  lat:61.12, lon:9.00, kind:'logistica', xp:100,
   title:'Il ritiro del van',
-  stops:['Sandefjord','Otta','Gjendesheim'],
+  stops:['Sandefjord','Fagernes','Slidrefjorden'],
   acts:[
     'Ritiro del camper a Sandefjord e primo giro di ricognizione dei comandi',
-    'Spesa grossa prima di salire in quota',
-    'Trasferimento verso Jotunheimen, notte a Besseggen Fjellpark (Maurvangen)'
+    'Spesa grossa prima di salire verso le montagne',
+    'Risalita del Valdres fino al Slidrefjorden'
   ],
-  brief:'Il primo giorno decide come vanno i quattro successivi. Fai la spesa grande qui, in pianura: da Otta in su i supermercati si diradano e a Gjendesheim non trovi nulla. Kiwi e Rema 1000 sono i più economici.',
+  brief:'Il primo giorno decide come vanno i quattro successivi. Il Valdres è la porta delle montagne: si sale piano, lungo laghi e fattorie, e si dorme sull\'acqua. Fai la spesa grande in pianura o a Fagernes, l\'ultima città vera prima della quota.',
   tips:[
     ['⚠','È sabato. Il Vinmonopolet — l\'unico posto dove si compra alcol sopra i 4,7° — chiude alle 15:00 il sabato ed è chiuso la domenica. Se vuoi qualcosa di più di una birra da supermercato, è adesso o mai più fino a lunedì.'],
-    ['🛒','Compra 6-8 litri d\'acqua di scorta: non per bere (l\'acqua norvegese è ottima) ma per non dover cercare un rifornimento il giorno di Besseggen.'],
-    ['📞','Stasera prenota il traghetto Gjende per domani mattina. Le prime corse in agosto si riempiono.'],
-    ['🔌','Controlla subito: livello acque chiare, valvola grigie, bombola gas, e dove si stacca la corrente. Farlo al buio sotto la pioggia è peggio.']
+    ['🛒','Kiwi e Rema 1000 sono i più economici. Fagernes ha tutto: da lì in su la scelta si riduce parecchio.'],
+    ['🔌','Controlla subito: livello acque chiare, valvola grigie, bombola gas, e dove si stacca la corrente. Farlo al buio sotto la pioggia è peggio.'],
+    ['🗺','Domani si affronta la Valdresflye. Stasera vale la pena controllare su vegvesen.no che il valico sia aperto: ad agosto lo è quasi sempre, ma è pur sempre una strada a 1.389 metri.']
   ],
-  drive:{ level:1, note:'E18 e E6, autostrada scorrevole. L\'ultimo tratto sulla Rv51 verso Gjendesheim sale ma è larga.' },
+  drive:{ level:1, note:'E18 e poi la E16 verso il Valdres. Strade larghe e scorrevoli, si sale gradualmente.' },
   costs:[['Spesa iniziale', 1200],['Notte in campeggio', 350],['Gasolio', 900]],
-  sleep:'Besseggen Fjellpark / Maurvangen Camping — a 10 minuti dal molo del traghetto.'
+  sleep:'Campeggi sul Slidrefjorden, zona Vestre Slidre e Røn.'
 },
 {
   n:2, date:'2026-08-02', dow:'domenica',
-  from:'Gjendesheim', to:'Lom', driveMin:50, realMin:null,
-  lat:61.84, lon:8.57, kind:'trekking', xp:400, trek:'besseggen',
-  title:'La cresta di Besseggen',
-  stops:['Gjendesheim','Memurubu','Besseggen','Lom'],
+  from:'Slidrefjorden', to:'Lom', driveMin:135, realMin:null,
+  lat:61.84, lon:8.57, kind:'fiordi', xp:150,
+  title:'La strada più alta di Norvegia',
+  stops:['Slidrefjorden','Valdresflye','Gjendesheim','Vågåmo','Lom'],
   acts:[
-    'Traghetto Gjendesheim → Memurubu alle prime luci',
-    'TREKKING 1: la cresta di Besseggen, 6-8h',
-    'Sera a Lom: la stavkirke del 1158 e il forno di Bakeriet i Lom'
+    'Rv51 sul Valdresflye, strada panoramica nazionale',
+    'Sosta a Gjendesheim sul lago Gjende',
+    'Arrivo a Lom: la stavkirke del 1158 e il forno di Bakeriet i Lom'
   ],
-  brief:'Si fa il traghetto per Memurubu e si torna a piedi verso il van. Sempre in questo verso: si affronta la salita dura al fresco del mattino e si finisce dove hai il letto, non dove hai un orario da rispettare.',
+  brief:'Duecento chilometri di strada panoramica nazionale che valicano a 1.389 metri, il punto più alto raggiunto da una strada con questo titolo in Norvegia. Sopra il limite degli alberi il paesaggio si spoglia: solo pietra, licheni e le cime del Jotunheimen tutt\'intorno.',
   tips:[
-    ['🥾','Il passaggio celebre è il Bandet: 300 metri di roccia ripida tra il Gjende verde smeraldo e il Bessvatnet blu. Si usano le mani. Non è alpinismo, ma non è nemmeno una passeggiata.'],
-    ['💧','Due litri a testa. In agosto i rivoli sulla cresta sono ridotti.'],
-    ['🍞','Bakeriet i Lom è una delle panetterie migliori della Norvegia. Dopo otto ore di cresta, i loro cinnamon buns sono una ricompensa seria.'],
-    ['⛪','La stavkirke di Lom è del 1158 e regge ancora in piedi con le sue travi di pino. Apre fino alle 20:00 in agosto.']
+    ['🏔','A Gjendesheim fermati: il lago Gjende è verde smeraldo per il limo dei ghiacciai, e da lì si vede la cresta di Besseggen che lo taglia in due. Vale la sosta anche solo per guardarla.'],
+    ['📷','Il punto panoramico di Valdresflye è progettato dagli architetti Snøhetta. Non è un parcheggio qualsiasi: è una tappa.'],
+    ['🍞','Bakeriet i Lom è una delle panetterie migliori della Norvegia, del panettiere Morten Schakenda. Arrivaci prima di sera.'],
+    ['⛪','La stavkirke di Lom è del 1158 e regge ancora sulle sue travi di pino. Ad agosto apre fino alle 20:00.']
   ],
-  drive:{ level:1, note:'Cinquanta minuti di Rv15 dopo il trekking. Poco, ma sarai cotto: guida con calma.' },
-  costs:[['Traghetto Gjende a/r', 500],['Notte in campeggio', 350]],
+  drive:{ level:2, note:'La Valdresflye è larga e ben tenuta, ma è alta e aperta: il vento e la nebbia arrivano in fretta. Chiusa d\'inverno, ad agosto è aperta.' },
+  costs:[['Notte in campeggio', 350],['Spesa', 500]],
   sleep:'Lom, campeggi lungo la Rv15 (Nordal Turistsenter o simili).'
 },
 {
   n:3, date:'2026-08-03', dow:'lunedì',
-  from:'Lom', to:'Geiranger', driveMin:135, realMin:null,
-  lat:62.10, lon:7.21, kind:'fiordi', xp:200,
-  title:'Il primo fiordo vero',
-  stops:['Lom','Dalsnibba','Flydalsjuvet','Geiranger'],
+  from:'Lom', to:'Geiranger', driveMin:120, realMin:null,
+  lat:62.10, lon:7.21, kind:'fiordi', xp:300, walk:'fosserasa',
+  title:'Il primo fiordo, e una cascata da attraversare',
+  stops:['Lom','Dalsnibba','Geiranger','Storsæterfossen'],
   acts:[
-    'Rv15 verso Grotli, poi Rv63 in discesa sul Geirangerfjord',
-    'Punti panoramici Dalsnibba e Flydalsjuvet',
-    'Battello nel Geirangerfjord: cascate delle Sette Sorelle'
+    'Rv15 verso Grotli, poi discesa sul Geirangerfjord',
+    'Battello nel Geirangerfjord alle 12:30: cascate delle Sette Sorelle',
+    'CAMMINATA: Fosseråsa fino alla Storsæterfossen, si passa dietro la cascata',
+    'Punti panoramici Flydalsjuvet e Dalsnibba'
   ],
-  brief:'La discesa su Geiranger dagli Ørnesvingen — undici tornanti a picco sul fiordo — è uno di quei momenti in cui capisci perché sei venuto fin qui. Guarda la strada, però: ai passeggeri il panorama.',
+  brief:'Giornata a incastro, perché il battello delle 12:30 è un orario fisso e tutto il resto gira intorno. Parti da Lom entro le 9:30 e hai il margine per i panoramici prima di imbarcarti, e il pomeriggio libero per la cascata.',
   tips:[
-    ['🏔','Dalsnibba: 1.500 m, strada a pedaggio (~180 NOK), vista dall\'alto sull\'intero fiordo. Vale ogni corona se il cielo è limpido. Se c\'è nebbia, risparmiali e vai dritto.'],
-    ['🚫','Evita la Gamle Strynefjellsvegen: è meravigliosa ma stretta e sterrata, non è strada da van.'],
-    ['⛴','Il battello costa 610 NOK (75 min) o 630 NOK (90 min). Prenota: in agosto con le navi da crociera in porto si riempie.'],
-    ['🅿️','I parcheggi di Geiranger sono a pagamento e pieni. Se puoi, arriva prima delle 10 o dopo le 17.']
+    ['⏰','Il battello alle 12:30 non aspetta. Da Lom sono due ore piene, più le soste ai punti panoramici: sveglia normale, non con calma.'],
+    ['🥾','La Fosseråsa la fai nel pomeriggio, dopo il battello: tre ore e mezza, e alle 22:16 tramonta. Margine abbondante.'],
+    ['🏔','Dalsnibba: 1.500 m, strada a pedaggio (~180 NOK), vista dall\'alto sull\'intero fiordo. Vale ogni corona con il cielo limpido; con la nebbia risparmiali.'],
+    ['🚫','Evita la Gamle Strynefjellsvegen: meravigliosa ma stretta e sterrata, non è strada da van.'],
+    ['🅿️','I parcheggi di Geiranger sono a pagamento e si riempiono. Con il battello a mezzogiorno arriverai nell\'ora peggiore: mettilo in conto.']
   ],
-  drive:{ level:3, note:'Ørnevegen: 11 tornanti stretti in discesa con 620 m di dislivello. Marcia bassa, freno motore, e non fermarti in curva.' },
-  costs:[['Pedaggio Dalsnibba', 180],['Battello Geirangerfjord', 610],['Notte in campeggio', 400]],
+  drive:{ level:3, note:'La discesa su Geiranger passa dagli Ørnesvingen: 11 tornanti stretti e 620 m di dislivello. Marcia bassa, freno motore, non fermarti in curva.' },
+  costs:[['Battello Geirangerfjord', 610],['Pedaggio Dalsnibba', 180],['Notte in campeggio', 400]],
   sleep:'Geiranger Camping, sul fiordo a due passi dal centro.'
 },
 {
   n:4, date:'2026-08-04', dow:'martedì',
-  from:'Geiranger', to:'Refviksanden', driveMin:210, realMin:240,
-  lat:61.99, lon:5.03, kind:'spiaggia', xp:200,
-  title:'Verso l\'Atlantico',
-  stops:['Geiranger','Hellesylt','Stryn','Måløy','Refviksanden'],
+  from:'Geiranger', to:'Sogndal', driveMin:270, realMin:null,
+  lat:61.23, lon:7.10, kind:'citta', xp:200,
+  title:'Formaggi, ghiacciai e una città di libri',
+  stops:['Geiranger','Westerås','Kandal','Olden','Fjærland','Sogndal'],
   acts:[
-    'Traghetto Geiranger → Hellesylt (o strada per Grotli/Stryn)',
-    'Attraversamento del Nordfjord verso la costa aperta',
-    'Arrivo a Refviksanden'
+    'Mattina alla fattoria di Westerås, sopra Geiranger',
+    'Caseificio Kandal Ysteri lungo la strada',
+    'Pranzo a Olden e caffè vista lago',
+    'Fjærland, la città dei libri, e il ghiacciaio Bøyabreen',
+    'Notte a Sogndal'
   ],
-  brief:'Si lascia il verde chiuso dei fiordi per il blu spalancato dell\'Atlantico. Refviksanden è una spiaggia di sabbia bianca a 62° di latitudine nord: sembra il Sud America, l\'acqua fa tredici gradi.',
+  brief:'La giornata più lenta e più buona del viaggio: si mangia bene, si guida in mezzo ai ghiacciai e si finisce in un villaggio dove le librerie di seconda mano stanno affacciate sul fiordo. Poco adrenalina, molta Norvegia.',
   tips:[
-    ['⚠','Il traghetto Geiranger-Hellesylt è privato: l\'AutoPASS non vale e si paga a persona, circa 390-420 NOK. Se il budget stringe, la strada via Grotli e Stryn è gratis e bellissima.'],
-    ['🪨','Deviazione breve: il Kannesteinen, una roccia a fungo scolpita dal mare in duemila anni. È a pochi minuti da Refvik.'],
-    ['💨','Sulla costa esposta il vento è un fattore vero. Parcheggia il van con il muso al vento, non di fianco.'],
-    ['🌅','Qui il sole tramonta tardi e sul mare. È la sera giusta per una cena fuori dal van.']
+    ['🧀','Se ieri hai fatto la Fosseråsa sei già passato dalla fattoria Westerås: il sentiero ci passa in mezzo. Stamattina ci arrivi in auto, per la colazione e la vista dall\'alto sul fiordo.'],
+    ['📚','Fjærland è la Bokbyen, la città dei libri: una manciata di librerie antiquarie in vecchi fienili e stalle lungo l\'acqua. C\'è anche il Museo dei ghiacciai.'],
+    ['🧊','Sulla strada per Fjærland il ghiacciaio Bøyabreen si vede dal parcheggio, senza camminare. Il Jostedalsbreen è il ghiacciaio più grande dell\'Europa continentale e questa è la sua lingua più accessibile.'],
+    ['⛴','Da Geiranger puoi imbarcarti per Hellesylt: è un traghetto privato, l\'AutoPASS non vale, circa 390-420 NOK a persona. La strada via Grotli e Stryn è gratis e altrettanto bella.']
   ],
-  drive:{ level:2, note:'Strade larghe e panoramiche. Un traghetto o due a seconda del percorso scelto.' },
-  costs:[['Traghetto Geiranger-Hellesylt', 800],['Notte', 300]],
-  sleep:'Refviksanden: area sosta vicino alla spiaggia. Verifica i cartelli, la zona è regolamentata.'
+  drive:{ level:2, note:'Molti chilometri ma strade larghe, tunnel e valli aperte. La giornata è lunga per le soste, non per la guida.' },
+  costs:[['Traghetto Geiranger-Hellesylt', 800],['Pranzo e caseificio', 700],['Notte in campeggio', 350]],
+  sleep:'Sogndal, campeggi sul Sogndalsfjorden.'
 },
 {
   n:5, date:'2026-08-05', dow:'mercoledì',
-  from:'Refviksanden', to:'Sognefjord', driveMin:240, realMin:null,
-  lat:61.21, lon:6.53, kind:'spiaggia', xp:150,
-  title:'Mattina sull\'oceano, sera nel fiordo',
-  stops:['Refviksanden','Gaularfjellet','Balestrand'],
+  from:'Sogndal', to:'Flåm', driveMin:210, realMin:null,
+  warn:'Il "senza traghetto" non è realizzabile: il Mannheller-Fodnes è di fatto un pezzo di strada, non un\'attrazione. E il Molden più il trasferimento riempiono la giornata da soli.',
+  lat:60.86, lon:7.11, kind:'trekking', xp:350, walk:'molden',
+  title:'Il panorama più bello del Sognefjord',
+  stops:['Sogndal','Molden','Lærdal','Aurlandsfjellet','Flåm'],
   acts:[
-    'Mattinata di relax totale fronte Atlantico, picnic sulla spiaggia',
-    'Pomeriggio in discesa verso il Sognefjord'
+    'CAMMINATA: Molden, 1.116 m, sopra il Lustrafjord',
+    'Attraversamento verso sud e strada panoramica Aurlandsfjellet',
+    'Sera a Flåm, birrificio locale'
   ],
-  brief:'Metà giornata senza sveglia, che a questo punto del viaggio serve. Poi verso sud lungo la E39, con due o tre traghetti da mettere in conto.',
+  brief:'Il Molden è la cima che i norvegesi indicano quando si parla del panorama sul Sognefjord: quattro chilometri di salita e il fiordo si apre in tutte le direzioni sotto di te. Poi si scende e si passa dall\'altra parte.',
   tips:[
-    ['💰','I traghetti della E39 sono il punto in cui l\'AutoPASS ferje prepagato si ripaga: 50% di sconto contro il 10% del solo tag. Se non l\'hai attivato prima di partire, fallo appena hai campo.'],
-    ['🛣','Alternativa alla E39: la strada panoramica nazionale del Gaularfjellet. Più lenta, infinitamente più bella, e la piattaforma panoramica di Utsikten vale la deviazione.'],
-    ['🏖','Il Sognefjord è il fiordo più lungo del mondo: 205 km. Stasera ci dormi dentro.']
+    ['⚠','Attenzione al "senza traghetto": da Sogndal a Flåm il traghetto Mannheller-Fodnes è di fatto obbligatorio. Sono quindici minuti e 58 corse al giorno, non è un\'attrazione, è un pezzo di strada. L\'unica alternativa è un giro molto lungo via Årdal e la Tindevegen, che non sta in una giornata con anche il Molden.'],
+    ['🛣','La via panoramica è l\'Aurlandsfjellet, la Snøvegen, fra Lærdal e Aurland: 47 km di altopiano nudo, aperta d\'estate. Ci passi anche dal punto panoramico di Stegastein. In alternativa c\'è il tunnel di Lærdal, 24,5 km, il più lungo del mondo.'],
+    ['⏱','Il Molden sono quattro-cinque ore, il trasferimento altre tre e mezza. È una giornata piena: parti presto e non contarci di arrivare a Flåm per pranzo.'],
+    ['🍺','Il birrificio di Flåm è l\'Ægir, dentro un edificio che sembra una stavkirke. Dopo il Molden è la ricompensa giusta.']
   ],
-  drive:{ level:2, note:'E39 con traghetti, oppure Gaularfjellet: tornanti larghi e ben tenuti, fattibili in van.' },
-  costs:[['Traghetti E39 (van)', 800],['Notte in campeggio', 350]],
-  sleep:'Zona Balestrand o Vangsnes, sul Sognefjord.'
+  drive:{ level:3, note:'La Snøvegen è una strada di montagna stretta e tortuosa ma fattibile in van. Il traghetto Mannheller-Fodnes va messo in conto nei tempi.' },
+  costs:[['Traghetto Mannheller-Fodnes', 350],['Parcheggio Molden', 100],['Notte in campeggio', 350]],
+  sleep:'Flåm, campeggio in fondo all\'Aurlandsfjord.'
 },
 {
   n:6, date:'2026-08-06', dow:'giovedì',
-  from:'Sognefjord', to:'Eidfjord', driveMin:270, realMin:null,
-  lat:60.47, lon:7.07, kind:'fiordi', xp:250,
-  title:'Flåm e la ferrovia impossibile',
-  stops:['Sognefjord','Flåm','Stegastein','Eidfjord'],
+  from:'Flåm', to:'Bergen', driveMin:180, realMin:null,
+  lat:60.39, lon:5.32, kind:'citta', xp:250,
+  title:'Il Nærøyfjord e poi la città',
+  stops:['Flåm','Gudvangen','Undredal','Bergen'],
   acts:[
-    'Guida lungo il Sognefjord',
-    'Pomeriggio a Flåm: Flåmsbana o kayak sull\'Aurlandsfjord',
-    'Trasferimento serale a Eidfjord'
+    'Traghetto Flåm → Gudvangen sul Nærøyfjord, ritorno in bus',
+    'Sosta a Undredal per il caprino locale',
+    'Bergen: funicolare Fløibanen e Bryggen'
   ],
-  brief:'La Flåmsbana sale 866 metri in venti chilometri con pendenze da record. È spettacolare ed è anche piena di gente scesa dalle navi. Il kayak sull\'Aurlandsfjord costa meno, dura di più e te lo ricordi meglio.',
+  brief:'Il Nærøyfjord è il braccio più stretto e più fotografato della Norvegia, patrimonio UNESCO: in certi punti le pareti si chiudono a duecento metri di distanza. Si va in traghetto e si torna in bus a riprendere il van.',
   tips:[
-    ['🚂','Flåmsbana: ~510 NOK andata, ~730 a/r in alta stagione. Se la fai, prendi la prima corsa del mattino.'],
-    ['🛶','Il kayak sull\'Aurlandsfjord è l\'alternativa che consiglierei: silenzio, pareti a picco, e nessuna coda.'],
-    ['⚠','Stegastein, la piattaforma sospesa: la strada che ci porta è strettissima e con un van grande è sconsigliata. C\'è la navetta da Flåm, usala.'],
-    ['🚇','Sulla strada per Eidfjord passi nel tunnel di Lærdal: 24,5 km, il più lungo del mondo, con tre grotte illuminate di azzurro per non farti impazzire.']
+    ['🚌','La logistica è questa: van parcheggiato a Flåm, traghetto fino a Gudvangen, bus di ritorno. Circa tre ore in tutto. Verifica gli orari del bus prima di imbarcarti, non dopo.'],
+    ['🧀','Undredal ha ottanta abitanti, la stavkirke in uso più piccola della Scandinavia — del 1147 — e un caprino che vale la deviazione. È sulla E16 fra Flåm e Gudvangen.'],
+    ['🅿️','Parcheggiare un van a Bergen è un problema vero. Il Bygarasjen ha un limite di altezza. Meglio lasciarlo in periferia e prendere il bus.'],
+    ['☔','Bergen piove in media 200 giorni l\'anno. Non è sfortuna, è il clima: tieni il guscio a portata.']
   ],
-  drive:{ level:2, note:'Fiordo e gallerie. La Aurlandsfjellet "Snøvegen" è aperta ad agosto ed è un\'alternativa panoramica al tunnel.' },
-  costs:[['Flåmsbana o kayak', 730],['Notte in campeggio', 350]],
-  sleep:'Eidfjord, campeggi sul fiordo.'
+  drive:{ level:2, note:'E16 verso Bergen, veloce fino al traffico urbano. La parte difficile è parcheggiare, non guidare.' },
+  costs:[['Traghetto Nærøyfjord', 900],['Fløibanen a/r', 200],['Parcheggi Bergen', 250],['Notte', 400]],
+  sleep:'Bergen, campeggi in periferia (Bratland o simili) oppure area sosta fuori centro.'
 },
 {
   n:7, date:'2026-08-07', dow:'venerdì',
-  from:'Eidfjord', to:'Jondal', driveMin:260, realMin:330, warn:true,
-  lat:60.27, lon:6.28, kind:'citta', xp:250,
-  title:'Vøringsfossen, Bergen e ritorno',
-  stops:['Eidfjord','Vøringsfossen','Bergen','Jondal'],
+  from:'Bergen', to:'Odda', driveMin:240, realMin:null,
+  warn:'La giornata più carica del viaggio, e domani ti alzi alle 4:30 per Trolltunga. La Husedalen intera non ci sta: fermati alla seconda cascata.',
+  lat:60.07, lon:6.55, kind:'trekking', xp:400, walk:'husedalen',
+  title:'Cascate, ponti sospesi e frutteti',
+  stops:['Bergen','Hardangerbrua','Eidfjord','Vøringsfossen','Kinsarvik','Odda'],
   acts:[
-    'Cascata Vøringsfossen e il ponte a gradini',
-    'Bergen: funicolare Fløibanen e il quartiere Bryggen',
-    'Traghetto Tørvikbygd → Jondal'
+    'Partenza da Bergen e strada panoramica verso l\'Hardangerfjord, sul ponte sospeso Hardangerbrua',
+    'Måbødalen e la Vøringsfossen: piattaforma panoramica e ponte pedonale sulla gola',
+    'CAMMINATA: Husedalen da Kinsarvik, la valle delle quattro cascate',
+    'Sera verso Odda lungo il Sørfjorden, per Lofthus e Ullensvang'
   ],
-  brief:'È la giornata più densa dell\'itinerario e va guardata in faccia adesso: Bergen sta a nord-ovest, Jondal a sud-est, e rifarsi indietro costa più di un\'ora di guida in più rispetto al foglio.',
+  brief:'Rispetto alla versione precedente questa giornata è stata girata nel verso giusto: tutto va da nord a sud senza tornare indietro. Resta però la più carica del viaggio, e domani ti alzi alle quattro e mezza.',
   tips:[
-    ['⚠','Il PDF dice 4h20 di guida. Il percorso reale è più vicino a 5h30, senza contare Vøringsfossen, la funicolare e Bryggen. Qualcosa va tagliato: o Bergen si accorcia a tre ore scarse, o si dorme vicino a Bergen e Jondal si fa domani presto.'],
-    ['💦','Vøringsfossen: 182 metri di salto. Il nuovo ponte a gradini che scavalca la gola è recente e spettacolare, e si vede in mezz\'ora.'],
-    ['🅿️','Parcheggiare un van a Bergen è un problema serio. Il Bygarasjen ha un limite di altezza. Meglio lasciare il van in periferia e prendere il bus, o il Bergen Storsenter.'],
-    ['☔','Bergen piove in media 200 giorni l\'anno. Non è sfortuna, è il clima. Tieni il guscio a portata.']
+    ['⚠','La Husedalen intera — tutte e quattro le cascate — sono 14 km e 5-6 ore. Oggi non ci stanno, e domani c\'è Trolltunga. Fermati alla seconda, la Nyastølsfossen: due ore e mezza a/r e hai visto il meglio.'],
+    ['🌉','Il ponte pedonale sospeso sopra la gola della Vøringsfossen è del 2020 e passa proprio sopra il salto di 182 metri. Non è per chi soffre di vertigini.'],
+    ['🍎','Lofthus e Ullensvang sono la capitale norvegese della frutta: ad agosto trovi mele, ciliegie e sidro venduti direttamente dai produttori lungo la strada.'],
+    ['🛑','Se la giornata scivola, taglia la Husedalen prima che Trolltunga. Le gambe che ti servono domani sono le stesse.']
   ],
-  drive:{ level:3, note:'Tanti chilometri, tunnel a pagamento e traffico urbano a Bergen. La giornata più stancante alla guida.' },
-  costs:[['Fløibanen a/r', 200],['Parcheggi Bergen', 250],['Traghetto Jondal', 250],['Notte', 350]],
-  sleep:'Jondal, sull\'Hardangerfjord. Vicino a Odda per la sveglia di domani.'
+  drive:{ level:3, note:'Quattro ore vere più le soste. L\'Hardangerbrua ha un pedaggio e il fiordo si costeggia su strade strette a tratti.' },
+  costs:[['Pedaggio Hardangerbrua', 200],['Parcheggio Kinsarvik', 100],['Notte a Odda', 350]],
+  sleep:'Odda. Prenota: la sera del 7 agosto chi fa Trolltunga il giorno dopo riempie tutto.'
 },
 {
   n:8, date:'2026-08-08', dow:'sabato',
-  from:'Jondal', to:'Odda', driveMin:30, realMin:75, warn:true,
-  lat:60.07, lon:6.55, kind:'trekking', xp:800, trek:'trolltunga',
+  from:'Odda', to:'Trolltunga', driveMin:30, realMin:null,
+  lat:60.12, lon:6.74, kind:'trekking', xp:800, trek:'trolltunga',
   title:'Trolltunga — il giorno',
-  stops:['Jondal','Skjeggedal','Trolltunga','Odda'],
+  stops:['Odda','Skjeggedal','Mågelitopp','Trolltunga'],
   acts:[
     'Sveglia alle 4:30, trasferimento a P2 Skjeggedal',
-    'TREKKING 2: Trolltunga, 10-12h a/r',
+    'TREKKING: Trolltunga, 10-12h a/r',
     'Crollo a Odda'
   ],
-  brief:'Il giorno per cui ti alleni. Ventotto chilometri da P2, venti se prendi la navetta fino a P3 Mågelitopp. Non è tecnico: è lungo, e la lunghezza è esattamente il problema.',
+  brief:'Il giorno per cui ti alleni. Ventotto chilometri da Skjeggedal, venti se prendi la navetta fino a Mågelitopp. Non è tecnico: è lungo, e la lunghezza è esattamente il problema.',
   tips:[
-    ['🚌','La navetta P2 → P3 costa da 150 NOK e ti risparmia un\'ora e mezza di salita su asfalto. Per tratta. Prendila: quei soldi comprano le gambe che ti servono al ritorno.'],
+    ['🚌','La navetta da P2 Skjeggedal a P3 Mågelitopp costa da 150 NOK e ti risparmia un\'ora e mezza di salita su asfalto. Per tratta. Prendila: quei soldi comprano le gambe che ti servono al ritorno.'],
     ['🕐','Slot navetta mattina 6:30-11:00, prenotabile online e drop-in a P2. Pomeriggio 14:30-19:00 solo drop-in. Parcheggio P2: 220 NOK.'],
     ['⛔','La regola d\'oro: se alle 14:00 non sei sulla lingua di roccia, torni indietro. Nessuna foto vale il rientro al buio su quel terreno.'],
     ['🎒','Tre litri d\'acqua, cibo per 3.000 kcal, guscio antivento, guanti, e la frontale anche se pensi di non usarla. Sopra i mille metri ad agosto può nevicare.'],
-    ['🌡','Controlla yr.no stasera. Se dà vento forte o pioggia continua, sposta a domani: hai il giorno di recupero come cuscinetto.']
+    ['🌡','Controlla yr.no stasera. Se dà vento forte o pioggia continua, sposta a domani: hai il giorno 14 come cuscinetto.']
   ],
-  drive:{ level:1, note:'Poca strada, ma il PDF sottostima: Jondal-Odda è circa 1h15. Consideralo stasera quando punti la sveglia.' },
-  costs:[['Parcheggio P2 Skjeggedal', 220],['Navetta P3 a/r', 300],['Notte a Odda', 350]],
-  sleep:'Odda, Trolltunga Camping o simili. Prenota: la sera dell\'8 agosto è tutto pieno.'
+  drive:{ level:1, note:'Mezz\'ora scarsa fino a Skjeggedal. La fatica di oggi non è al volante.' },
+  costs:[['Parcheggio P2 Skjeggedal', 220],['Navetta Mågelitopp a/r', 300],['Notte a Odda', 350]],
+  sleep:'Odda, stessa base della sera prima.'
 },
 {
   n:9, date:'2026-08-09', dow:'domenica',
@@ -810,7 +828,7 @@ NQ.DAYS = [
     ['⛔','Se la roccia è bagnata o tira vento, non salire sul masso. Punto. Il panorama è lo stesso anche da un metro più indietro, e ci sono morti che dicono il contrario.'],
     ['⛓','Le catene sui tre pendii non sono decorative: servono davvero, sia in salita che in discesa.'],
     ['🅿️','Øygardstøl: 300 NOK oltre le due ore, gratis sotto.'],
-    ['⛵','Alternativa legittima: la crociera nel Lysefjord da Lysebotn. Dopo quattro trekking in dieci giorni non è una resa, è buon senso.'],
+    ['⛵','Alternativa legittima: la crociera nel Lysefjord da Lysebotn. Con Trolltunga e il Preikestolen nelle gambe da pochi giorni, non è una resa: è buon senso.'],
     ['🍸','Øvre Holmegate a Stavanger è la via delle case dipinte di tutti i colori. È il posto giusto per il primo aperitivo vero del viaggio.']
   ],
   drive:{ level:3, note:'Se scendi da Øygardstøl verso Stavanger eviti i tornanti peggiori. Da Lysebotn invece si risale la Lysevegen.' },
@@ -883,7 +901,8 @@ NQ.DAYS = [
 },
 {
   n:15, date:'2026-08-15', dow:'sabato',
-  from:'Kristiansand', to:'Sandefjord', driveMin:120, realMin:180, warn:true,
+  from:'Kristiansand', to:'Sandefjord', driveMin:120, realMin:180,
+  warn:'Il foglio dice 2h ma sono 230 km sulla E18: conta 3 ore piene, più il tempo della riconsegna.',
   lat:59.13, lon:10.22, kind:'logistica', xp:200,
   title:'Riconsegna e rientro',
   stops:['Kristiansand','Sandefjord','Torp'],
@@ -908,28 +927,8 @@ NQ.DAYS = [
 /* ---------- I 4 trekking ---------- */
 
 NQ.TREKS = {
-  besseggen:{
-    name:'Besseggen', day:2, boss:1,
-    sub:'La cresta tra due laghi di colore diverso',
-    km:14, up:1100, hours:'6-8h', stars:3,
-    lat:61.49, lon:8.83,
-    startBy:'08:00', margin:9,
-    desc:'Il traghetto ti scarica a Memurubu e da lì si torna a piedi verso Gjendesheim, dove hai lasciato il van. Il momento che tutti ricordano è il Bandet: una rampa di roccia ripida stretta fra il Gjende, verde smeraldo per via del limo glaciale, e il Bessvatnet, blu profondo e trecento metri più in alto. Due laghi che si toccano e hanno colori diversi.',
-    kit:['2 litri d\'acqua a testa','Scarponi con caviglia alta','Guscio antivento','Guanti leggeri','Pranzo al sacco','Frontale'],
-    risks:[
-      'Il Bandet si fa usando le mani: se soffri di vertigini, sappilo prima di salire sul traghetto.',
-      'Con roccia bagnata la salita diventa parecchio più insidiosa.',
-      'Una volta a Memurubu l\'unica via di uscita è a piedi o l\'ultimo traghetto.'
-    ],
-    logi:[
-      ['Traghetto', 'Gjendesheim → Memurubu, fino a 8 corse al giorno. Stagione da inizio giugno a inizio ottobre. Bagaglio 100 NOK a collo.'],
-      ['Verso', 'Sempre Memurubu → Gjendesheim: si sale al fresco e si finisce al van.'],
-      ['Prenotazione', 'Da fare la sera prima. In agosto le prime corse si riempiono.']
-    ],
-    turnaround:'Nessun punto di non ritorno critico: la cresta è un percorso lineare verso il van.'
-  },
   trolltunga:{
-    name:'Trolltunga', day:8, boss:2,
+    name:'Trolltunga', day:8, boss:1,
     sub:'La lingua del troll — l\'impresa del viaggio',
     km:20, up:800, hours:'10-12h', stars:5,
     lat:60.12, lon:6.74,
@@ -950,7 +949,7 @@ NQ.TREKS = {
     turnaround:'Se alle 14:00 non sei alla lingua, torna indietro. Il tramonto dell\'8 agosto a Odda è intorno alle 21:20 e il rientro al buio su quel terreno non è un\'opzione.'
   },
   preikestolen:{
-    name:'Preikestolen', day:10, boss:3,
+    name:'Preikestolen', day:10, boss:2,
     sub:'Il pulpito a picco sul Lysefjord',
     km:8, up:460, hours:'4-5h', stars:2,
     lat:58.99, lon:6.19,
@@ -970,7 +969,7 @@ NQ.TREKS = {
     turnaround:'Con quattro ore di cammino e sedici ore di luce non c\'è nessuna fretta reale.'
   },
   kjerag:{
-    name:'Kjeragbolten', day:11, boss:4,
+    name:'Kjeragbolten', day:11, boss:3,
     sub:'Il masso incastrato nel vuoto',
     km:12, up:800, hours:'6-7h', stars:4,
     lat:59.03, lon:6.59,
@@ -988,6 +987,47 @@ NQ.TREKS = {
       ['Alternativa', 'Crociera nel Lysefjord da Lysebotn: il fiordo visto dal basso, zero dislivello.']
     ],
     turnaround:'Se alle 14:00 non sei al masso, rientra. La Lysevegen o la strada per Stavanger vanno affrontate con la luce.'
+  }
+};
+
+/* ---------- Le camminate ---------- */
+/* Non sono boss: si fanno dentro una giornata che ha già altro dentro,
+   e nessuna di queste ti mette in difficoltà. Ma tutte e tre hanno un
+   dettaglio logistico che conviene sapere prima di partire. */
+
+NQ.WALKS = {
+  fosserasa:{
+    name:'Fosseråsa', day:3,
+    sub:'Fino a passare dietro la cascata',
+    km:6, up:550, hours:'3-3,5h', stars:2,
+    lat:62.09, lon:7.19,
+    desc:'Nel 2019 è stato il primo sentiero della Norvegia a ricevere il titolo di percorso escursionistico nazionale. Parte dal centro di Geiranger, passa dal Norsk Fjordsenter e sale attraverso la fattoria Westerås fino alla Storsæterfossen, a 550 metri. Il finale è la ragione per cui ci si va: il sentiero passa <b>dietro</b> il salto d\'acqua, in una rientranza nella roccia, e per qualche metro guardi il fiordo attraverso la cascata.',
+    good:'Nessun tratto esposto, sentiero curato per intero, dislivello costante ma mai brutale. Si fa anche a fine giornata.',
+    watch:'La roccia dietro la cascata è sempre bagnata e scivolosa. E ti bagni: non è un modo di dire.',
+    kit:['Scarpe con suola che tiene sul bagnato','Un guscio leggero','1 litro d\'acqua'],
+    note:'Se il giorno dopo passi in auto dalla fattoria Westerås, oggi ci sei già stato a piedi: il sentiero le taglia in mezzo.'
+  },
+  molden:{
+    name:'Molden', day:5,
+    sub:'Il panorama più bello del Sognefjord',
+    km:8.4, up:600, hours:'4-5h', stars:3,
+    lat:61.29, lon:7.24,
+    desc:'Millecentosedici metri sopra il Lustrafjord, ed è la cima che i norvegesi tirano fuori quando si discute di quale sia la vista migliore sul Sognefjord. Il parcheggio di Krossen sta già a 500 metri, sulla strada fra Hafslo e Mollandsmarki, quindi la salita vera sono poco più di quattro chilometri e seicento metri di dislivello. Il punto panoramico migliore non è la cima ma il gapahuk poche centinaia di metri più a nord.',
+    good:'Pendenza regolare, mai ripida davvero, sentiero segnato. Con il cielo pulito il fiordo si apre in tutte le direzioni.',
+    watch:'È una cima esposta: se c\'è nuvola bassa non vedi niente e il senso della salita si perde. Stagione da metà giugno a metà settembre.',
+    kit:['Scarponi','Antivento','2 litri d\'acqua','Qualcosa da mangiare in cima'],
+    note:'Il paese di Solvorn è a pochi minuti dal parcheggio: casette bianche sul fiordo, e ci si può fare il bagno.'
+  },
+  husedalen:{
+    name:'Husedalen', day:7,
+    sub:'La valle delle quattro cascate',
+    km:14, up:750, hours:'5-6h', stars:3,
+    lat:60.38, lon:6.72,
+    desc:'Da Kinsarvik il sentiero risale il fiume Kinso verso l\'Hardangervidda e incontra quattro cascate in fila: Tveitafossen, Nyastølsfossen, Nykkjesøyfossen e Søtefossen. Ogni salto è più grande del precedente. Fino alla quarta e ritorno sono quattordici chilometri e fino a 750 metri di dislivello.',
+    good:'Si può accorciare quanto si vuole: ogni cascata è un traguardo sensato e si torna indietro dalla stessa strada.',
+    watch:'Alcuni tratti sono ripidi e scivolosi, e in discesa lo sono di più. Serve una scarpa che tenga davvero.',
+    kit:['Scarponi con buona aderenza','2 litri d\'acqua','Antivento'],
+    note:'Il giorno 7 ha già quattro ore di guida e la Vøringsfossen, e il mattino dopo c\'è Trolltunga. Ferma alla seconda cascata, la Nyastølsfossen: due ore e mezza a/r e hai visto la parte migliore.'
   }
 };
 
@@ -1094,10 +1134,10 @@ NQ.GUIDE = [
 /* ---------- Trofei ---------- */
 
 NQ.TROPHIES = [
-  { id:'besseggen', icon:'🗡', name:'Sul filo',           desc:'Attraversata la cresta di Besseggen' },
   { id:'trolltunga',icon:'👅', name:'Lingua del troll',   desc:'Portata a casa Trolltunga' },
   { id:'preikestolen',icon:'🪨',name:'Il pulpito',        desc:'In piedi sul Preikestolen' },
   { id:'kjerag',    icon:'💀', name:'Nel vuoto',          desc:'Arrivato al Kjeragbolten' },
+  { id:'camminate', icon:'🥾', name:'Passo dopo passo',   desc:'Fatte tutte e tre le camminate' },
   { id:'surf',      icon:'🏄', name:'Surfista artico',    desc:'Entrato in acqua sul Jæren' },
   { id:'cronista',  icon:'📖', name:'Cronista',           desc:'Diario scritto per tutti e 15 i giorni' },
   { id:'contabile', icon:'💰', name:'Contabile vichingo', desc:'Registrate 10 spese' },
@@ -1385,7 +1425,7 @@ var Store = {
   d:null,
 
   blank:function(){
-    return { v:3, done:{}, journal:{}, exp:[], photos:[], trophies:{},
+    return { v:4, done:{}, journal:{}, exp:[], photos:[], trophies:{},
              people:[{id:'p1',name:'Io'},{id:'p2',name:'Compagno'}],
              xp:0, rate:NQ.TRIP.rate, budget:null, mute:true, seen:false };
   },
@@ -1417,7 +1457,15 @@ var Store = {
       if(!NQ.CATS[e.cat]) e.cat='altro';
     });
 
-    this.d.v=3;
+    /* v3 → v4: l'itinerario è cambiato e Besseggen non c'è più.
+       Un trofeo orfano continuerebbe a essere contato nel totale. */
+    var noti={};
+    NQ.TROPHIES.forEach(function(t){ noti[t.id]=1; });
+    Object.keys(this.d.trophies).forEach(function(id){
+      if(!noti[id]) delete this.d.trophies[id];
+    }, this);
+
+    this.d.v=4;
     return this.d;
   },
 
@@ -1857,9 +1905,9 @@ NQ.confetti = function(){
    XP E TROFEI
    ============================================================ */
 
-/* Tarati sui 4.350 XP totali dell'itinerario: chi completa tutto
-   arriva a livello 11 esatto l'ultimo giorno. */
-NQ.LEVELS = [0,200,450,750,1100,1500,1950,2450,3000,3600,4250];
+/* Tarati sugli XP totali dell'itinerario: chi completa tutto arriva
+   a livello 11 esatto l'ultimo giorno. Da ricalibrare se cambiano i giorni. */
+NQ.LEVELS = [0,210,470,780,1150,1570,2040,2560,3150,3800,4550];
 
 NQ.level = function(xp){
   var L=NQ.LEVELS, i=0;
@@ -1901,6 +1949,10 @@ NQ.checkTrophies = function(){
     if(day.trek && d.done[day.n]) NQ.award(day.trek);
   });
   if(d.done[12]) NQ.award('surf');
+
+  var walkDays=NQ.DAYS.filter(function(day){ return day.walk; });
+  if(walkDays.length && walkDays.every(function(day){ return d.done[day.n]; }))
+    NQ.award('camminate');
 
   var jn=Object.keys(d.journal).filter(function(k){
     return (d.journal[k].txt||'').trim().length>0;
@@ -2533,7 +2585,7 @@ NQ.renderMap=function(){
          '<div class="big">'+n+'</div>'+
          '<div class="lab">'+(n===1?'giorno alla partenza':'giorni alla partenza')+'</div>'+
          '<p class="muted small mt">Si parte sabato 1 agosto da Sandefjord. Quindici giorni, '+
-         'quattro trekking e circa 2.400 km di fiordi.</p>'+
+         'tre trekking, tre camminate e circa 2.400 km fra montagne e fiordi.</p>'+
        '</div>';
   } else if(ph==='live' && idx>=0){
     var day=NQ.DAYS[idx];
@@ -2549,7 +2601,7 @@ NQ.renderMap=function(){
   } else if(ph==='post'){
     h+='<div class="pxbox lo center">'+
          '<h2>Viaggio concluso</h2>'+
-         '<p class="muted small">Quindici giorni, quattro trekking, un van. '+
+         '<p class="muted small">Quindici giorni, tre trekking, un van. '+
          'Da qui in poi questa pagina è un archivio: rileggi il diario, guarda i conti, esporta tutto.</p>'+
          '<button class="pxbtn go mt" onclick="NQ.go(\'journal\')">Apri il diario</button>'+
        '</div>';
@@ -2624,9 +2676,10 @@ NQ.openDay=function(n){
      '</div>';
 
   if(day.warn){
-    h+='<div class="warnbox"><b>⚠ Tempo di guida ottimistico.</b> Il foglio indica '+
-       NQ.hm(day.driveMin)+', il percorso reale è più vicino a '+NQ.hm(day.realMin)+
-       '. Il dato originale resta qui sopra come riferimento, ma pianifica sul secondo.</div>';
+    h+='<div class="warnbox"><b>⚠ Attenzione.</b> '+esc(day.warn)+
+       (day.realMin? ' Il foglio indica '+NQ.hm(day.driveMin)+', il percorso reale è più vicino a '+
+                     NQ.hm(day.realMin)+': il dato originale resta qui sopra come riferimento.' : '')+
+       '</div>';
   }
 
   h+='<div class="pxbox"><p>'+esc(day.brief)+'</p></div>';
@@ -2635,11 +2688,29 @@ NQ.openDay=function(n){
   day.acts.forEach(function(a){ h+='<li>'+esc(a)+'</li>'; });
   h+='</ul></div>';
 
+  if(day.walk){
+    var wk=NQ.WALKS[day.walk];
+    h+='<button class="bosscard walk" onclick="NQ.openWalk(\''+day.walk+'\')">'+
+         '<span class="bh" style="display:block">'+
+           '<span class="bn">Camminata di oggi</span>'+
+           '<h3>'+esc(wk.name)+'</h3>'+
+           '<span class="bs">'+esc(wk.sub)+'</span>'+
+         '</span>'+
+         '<span class="bb">'+
+           '<span><b>'+wk.km+'</b> km</span>'+
+           '<span><b>'+wk.up+'</b> m D+</span>'+
+           '<span><b>'+esc(wk.hours)+'</b></span>'+
+           stars(wk.stars,5)+
+           '<span style="margin-left:auto">dettagli ›</span>'+
+         '</span>'+
+       '</button>';
+  }
+
   if(day.trek){
     var tk=NQ.TREKS[day.trek];
     h+='<button class="bosscard" onclick="NQ.openTrek(\''+day.trek+'\')">'+
          '<span class="bh" style="display:block">'+
-           '<span class="bn">Boss '+tk.boss+' di 4</span>'+
+           '<span class="bn">Boss '+tk.boss+' di 3</span>'+
            '<h3>'+esc(tk.name)+'</h3>'+
            '<span class="bs">'+esc(tk.sub)+'</span>'+
          '</span>'+
@@ -2716,9 +2787,10 @@ NQ.toggleDay=function(n){
 
 NQ.renderTreks=function(){
   var s=d();
-  var h='<div class="pxbox lo"><h2>I quattro boss</h2>'+
-        '<p class="small muted" style="margin:0">Quattro trekking in dieci giorni, con Trolltunga al centro. '+
-        'Ogni scheda ha logistica, kit, rischi e l\'ora entro cui conviene essere partito.</p></div>';
+  var h='<div class="pxbox lo"><h2>I tre boss</h2>'+
+        '<p class="small muted" style="margin:0">Tre giornate intere di montagna in quattro giorni, con Trolltunga ad aprire. '+
+        'Ogni scheda ha logistica, kit, rischi e l\'ora entro cui conviene essere partito.</p>'+
+        '<button class="pxbtn sm mt" onclick="NQ.go(\'walk\')">Le camminate brevi stanno qui ›</button></div>';
 
   h+='<div class="bossgrid">';
   Object.keys(NQ.TREKS).forEach(function(id){
@@ -2751,7 +2823,7 @@ NQ.openTrek=function(id){
   var h='<button class="pxbtn sm" onclick="NQ.go(\'trek\')">‹ Trekking</button>';
 
   h+='<div class="dayhead mt" style="background:linear-gradient(180deg,#2a1a2e,#141a24)">'+
-       '<div class="kicker" style="color:#e8544b">Boss '+t.boss+' di 4 · giorno '+t.day+' · '+dateLabel(day)+'</div>'+
+       '<div class="kicker" style="color:#e8544b">Boss '+t.boss+' di 3 · giorno '+t.day+' · '+dateLabel(day)+'</div>'+
        '<h2>'+esc(t.name)+(got?' ✅':'')+'</h2>'+
        '<div class="route">'+esc(t.sub)+'</div>'+
      '</div>';
@@ -2800,6 +2872,95 @@ NQ.openTrek=function(id){
   $('#v-day').innerHTML=h;
   NQ.go('day', null, true);
   NQ.chip.want('boss');
+};
+
+/* ============================================================
+   CAMMINATE
+   Le uscite brevi che stanno dentro una giornata già piena.
+   Tenute separate dai boss di proposito: hanno un impegno e una
+   logistica di un altro ordine, e mescolarle confonderebbe la lettura.
+   ============================================================ */
+
+NQ.renderWalks=function(){
+  var s=d();
+  var h='<div class="pxbox lo"><h2>Le camminate</h2>'+
+        '<p class="small muted" style="margin:0">Tre uscite brevi, una dentro ciascuna delle giornate 3, 5 e 7. '+
+        'Nessuna è impegnativa come i trekking grossi, ma tutte e tre hanno un dettaglio che conviene sapere prima.</p></div>';
+
+  h+='<div class="bossgrid">';
+  Object.keys(NQ.WALKS).forEach(function(id){
+    var w=NQ.WALKS[id], done=!!s.done[w.day];
+    h+='<button class="bosscard walk" onclick="NQ.openWalk(\''+id+'\')">'+
+         '<span class="bh" style="display:block">'+
+           '<span class="bn">Giorno '+w.day+(done?' · ✅ fatta':'')+'</span>'+
+           '<h3>'+esc(w.name)+'</h3>'+
+           '<span class="bs">'+esc(w.sub)+'</span>'+
+         '</span>'+
+         '<span class="bb">'+
+           '<span><b>'+w.km+'</b> km</span>'+
+           '<span><b>'+w.up+'</b> m D+</span>'+
+           '<span><b>'+esc(w.hours)+'</b></span>'+
+           stars(w.stars,5)+
+         '</span>'+
+       '</button>';
+  });
+  h+='</div>';
+
+  h+='<div class="pxbox lo mt"><h3>E i tre grossi?</h3>'+
+       '<p class="small muted">Trolltunga, Preikestolen e Kjeragbolten stanno nella loro sezione: '+
+       'sono giornate intere, non attività dentro una giornata.</p>'+
+       '<button class="pxbtn sm" onclick="NQ.go(\'trek\')">Vai ai trekking ›</button>'+
+     '</div>';
+
+  $('#v-walk').innerHTML=h;
+};
+
+NQ.openWalk=function(id){
+  var w=NQ.WALKS[id]; if(!w) return;
+  var day=dayByN(w.day);
+  var sun=NQ.sun(day.date, w.lat, w.lon);
+  var s=d(), done=!!s.done[w.day];
+
+  var h='<button class="pxbtn sm" onclick="NQ.go(\'walk\')">‹ Camminate</button>';
+
+  h+='<div class="dayhead mt" style="background:linear-gradient(180deg,#1b2e22,#141a24)">'+
+       '<div class="kicker" style="color:var(--green)">Camminata · giorno '+w.day+' · '+dateLabel(day)+'</div>'+
+       '<h2>'+esc(w.name)+(done?' ✅':'')+'</h2>'+
+       '<div class="route">'+esc(w.sub)+'</div>'+
+     '</div>';
+
+  h+='<div class="factgrid">'+
+       '<div class="fact"><s>Distanza</s><b>'+w.km+' km</b></div>'+
+       '<div class="fact"><s>Dislivello</s><b>'+w.up+' m</b></div>'+
+       '<div class="fact"><s>Durata</s><b>'+esc(w.hours)+'</b></div>'+
+       '<div class="fact"><s>Tramonto</s><b>'+(sun.set||'—')+'</b></div>'+
+     '</div>';
+
+  h+='<div class="pxbox"><div class="row" style="align-items:center">'+
+       '<div style="flex:0 0 auto">'+stars(w.stars,5)+'</div>'+
+       '<div class="small muted">impegno</div></div>'+
+       '<p class="mt" style="margin-bottom:0">'+w.desc+'</p></div>';
+
+  h+='<div class="pxbox"><h3>Cosa la rende facile</h3><p style="margin:0">'+esc(w.good)+'</p></div>';
+
+  h+='<div class="pxbox" style="box-shadow:0 0 0 4px var(--gold)">'+
+       '<h3>A cosa fare attenzione</h3><p style="margin:0">'+esc(w.watch)+'</p></div>';
+
+  h+='<div class="pxbox"><h3>Nello zaino</h3><ul class="acts">';
+  w.kit.forEach(function(k){ h+='<li>'+esc(k)+'</li>'; });
+  h+='</ul></div>';
+
+  if(w.note){
+    h+='<div class="pxbox lo"><h3>Da tenere presente</h3><p style="margin:0">'+esc(w.note)+'</p></div>';
+  }
+
+  h+='<div class="pxbox center">'+
+       '<button class="pxbtn sm" onclick="NQ.openDay('+w.day+')">Vedi il giorno '+w.day+' ›</button>'+
+     '</div>';
+
+  $('#v-day').innerHTML=h;
+  NQ.go('day', null, true);
+  NQ.chip.want('route');
 };
 
 /* ============================================================
@@ -3398,6 +3559,7 @@ var $=NQ.$, esc=NQ.esc;
 var VIEWS={
   map:    { el:'#v-map',     render:NQ.renderMap,     music:'route', tab:'map'   },
   trek:   { el:'#v-trek',    render:NQ.renderTreks,   music:'boss',  tab:'trek'  },
+  walk:   { el:'#v-walk',    render:NQ.renderWalks,   music:'route', tab:'walk'  },
   journal:{ el:'#v-journal', render:NQ.renderJournal, music:'route', tab:'journal'},
   money:  { el:'#v-money',   render:NQ.renderMoney,   music:'route', tab:'money' },
   guide:  { el:'#v-guide',   render:NQ.renderGuide,   music:'route', tab:'guide' },
