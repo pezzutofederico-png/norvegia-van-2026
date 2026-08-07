@@ -385,7 +385,30 @@ ul.acts li{ margin-bottom:5px; }
   background:var(--bg2); border:0; cursor:pointer; color:var(--ink-dim);
   box-shadow:inset 0 0 0 2px var(--line); }
 .seg button.on{ color:var(--gold); box-shadow:inset 0 0 0 2px var(--gold); background:var(--panel-hi); }
+
+/* selettore della valuta di visualizzazione: sta in cima al Tesoro
+   perché cambia la lettura di tutto quello che c'è sotto */
+.seg.curseg{ margin-bottom:14px; }
+.seg.curseg button{ min-height:44px; font-size:13px; font-weight:700; letter-spacing:.04em; }
 .seg button s{ text-decoration:none; opacity:.65; }
+
+/* ---------- sincronizzazione ---------- */
+
+.syncrow{ display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+  padding:10px 11px; background:var(--bg2); box-shadow:inset 0 0 0 2px var(--line);
+  font-size:12px; }
+.syncrow s{ text-decoration:none; color:var(--ink-faint); font-size:10px; }
+.sdot{ width:10px; height:10px; flex:0 0 10px; background:var(--ink-faint); }
+.sdot.ok{ background:var(--green); }
+.sdot.bad{ background:var(--red); }
+.sdot.warn{ background:var(--gold); }
+.sdot.off{ background:var(--ink-faint); }
+.sdot.busy{ background:var(--blue); animation:blink .8s steps(2) infinite; }
+@keyframes blink{ 50%{ opacity:.25 } }
+
+pre.code{ background:#08111b; box-shadow:inset 0 0 0 2px var(--line);
+  padding:11px 12px; overflow-x:auto; font-size:11px; line-height:1.5;
+  color:var(--green); margin:10px 0; }
 
 /* ---------- persone ---------- */
 
@@ -563,6 +586,10 @@ label.pxbtn:focus-within{ outline:4px solid var(--gold); outline-offset:3px; }
 
 <div id="toast" aria-live="polite"></div>
 <canvas id="confetti" aria-hidden="true"></canvas>
+
+<div class="modal" id="modal" role="dialog" aria-modal="true">
+  <div class="mbox" id="modalbody"></div>
+</div>
 
 <script>
 
@@ -1424,10 +1451,19 @@ var KEY='norgequest.v1';
 var Store = {
   d:null,
 
+  /* Lo stato è diviso in due: quello che si sincronizza fra i due
+     dispositivi e quello che resta locale. Le foto restano locali perché
+     sono troppo pesanti; XP e trofei perché si ricavano dal resto. */
   blank:function(){
-    return { v:4, done:{}, journal:{}, exp:[], photos:[], trophies:{},
-             people:[{id:'p1',name:'Io'},{id:'p2',name:'Compagno'}],
-             xp:0, rate:NQ.TRIP.rate, budget:null, mute:true, seen:false };
+    return { v:6,
+      /* --- sincronizzato --- */
+      done:{}, doneTs:{}, journal:{}, exp:[], deleted:{},
+      people:[{id:'p1',name:'Io',ts:0},{id:'p2',name:'Compagno',ts:0}],
+      rate:NQ.TRIP.rate, budget:null, display:'eur', metaTs:0,
+      /* --- solo su questo dispositivo --- */
+      photos:[], trophies:{}, mute:true, seen:false,
+      sync:{ url:'', code:'', last:0, auto:true }
+    };
   },
 
   load:function(){
@@ -1465,7 +1501,28 @@ var Store = {
       if(!noti[id]) delete this.d.trophies[id];
     }, this);
 
-    this.d.v=4;
+    /* v4 → v5: ogni record prende una marca temporale, altrimenti unire
+       due dispositivi sarebbe indovinare chi ha ragione. Gli XP salvati
+       spariscono: ora si ricavano dai giorni completati. */
+    delete this.d.xp;
+    var t0=Date.now();
+    Object.keys(this.d.done).forEach(function(k){
+      if(this.d.doneTs[k]==null) this.d.doneTs[k]=t0;
+    }, this);
+    this.d.exp.forEach(function(e){ if(!e.ts) e.ts=t0; });
+    Object.keys(this.d.journal).forEach(function(k){
+      if(!this.d.journal[k].ts) this.d.journal[k].ts=t0;
+    }, this);
+    this.d.people.forEach(function(p){ if(p.ts==null) p.ts=0; });
+    if(!this.d.metaTs) this.d.metaTs=0;
+
+    /* v5 → v6: gli importi smettono di essere sempre in corone.
+       Quelli già registrati erano in NOK, quindi si etichettano così:
+       nessun valore cambia, cambia solo il fatto che ora è dichiarato. */
+    this.d.exp.forEach(NQ.normalizzaSpesa);
+    if(!NQ.CUR[this.d.display]) this.d.display='eur';
+
+    this.d.v=6;
     return this.d;
   },
 
@@ -1805,56 +1862,132 @@ NQ.chip=Chip;
 NQ.chipDebug={ TRACKS:TRACKS, freq:freq };
 
 /* ============================================================
-   CONTI CONDIVISI
-   Chi ha anticipato quanto, quanto gli spetta, e il minor numero
-   di bonifici che pareggia tutto.
+   DENARO
+   Ogni spesa conserva l'importo NELLA VALUTA IN CUI È STATA INSERITA.
+   Convertire subito in una valuta unica e riconvertire per mostrarla
+   falsa il dato: un volo pagato 180,00 € non tornerebbe mai
+   esattamente 180,00, e cambiando il tasso cambierebbe pure il
+   passato. La conversione avviene solo al momento di sommare
+   valute diverse, e solo lì.
    ============================================================ */
 
-/* Le divisioni in parti uguali lasciano resti di 1 corona. Vengono
-   distribuiti sui primi partecipanti invece di sparire: così la somma
-   delle quote è sempre esattamente il totale speso. */
-function shares(e){
+NQ.CUR = {
+  eur:{ sym:'€',  nome:'euro',   dec:2 },
+  nok:{ sym:'kr', nome:'corone', dec:0 }
+};
+
+NQ.display = function(){
+  var v=NQ.store.d.display;
+  return NQ.CUR[v] ? v : 'eur';
+};
+
+NQ.rate = function(){ return NQ.store.d.rate || NQ.TRIP.rate; };
+
+/* Valore di una spesa nella valuta richiesta. Se coincide con quella
+   di inserimento non si tocca niente: resta l'importo esatto. */
+NQ.val = function(e, cur){
+  cur = cur || NQ.display();
+  var a = e.amt != null ? e.amt : e.nok;      // record non ancora migrati
+  var c = e.cur || 'nok';
+  if(c === cur) return a;
+  return c === 'nok' ? a / NQ.rate() : a * NQ.rate();
+};
+
+/* I costi stimati dell'itinerario sono in corone: questa li porta
+   nella valuta di visualizzazione. */
+NQ.daNok = function(n, cur){
+  cur = cur || NQ.display();
+  return cur === 'nok' ? n : n / NQ.rate();
+};
+
+NQ.fmt = function(v, cur){
+  cur = cur || NQ.display();
+  var C = NQ.CUR[cur];
+  return v.toLocaleString('it-IT', {
+    minimumFractionDigits:C.dec, maximumFractionDigits:C.dec
+  }) + ' ' + C.sym;
+};
+
+/* Riporta una spesa alla forma corrente. Serve sia alla migrazione sia
+   ai dati che arrivano da un dispositivo con una versione precedente. */
+NQ.normalizzaSpesa = function(e){
+  if(e && e.amt == null && e.nok != null){
+    e.amt = e.nok; e.cur = 'nok'; delete e.nok;
+  }
+  if(e && !e.cur) e.cur = 'nok';
+  return e;
+};
+
+/* ============================================================
+   CONTI CONDIVISI
+   Chi ha anticipato quanto, quanto gli spetta, e il minor numero
+   di passaggi di denaro che pareggia tutto.
+
+   Tutta l'aritmetica avviene in unità minime intere — centesimi per
+   l'euro, corone per la NOK — perché sommando decimali i conti non
+   chiudono e restano differenze di un centesimo che non si spiegano.
+   ============================================================ */
+
+function minori(e, cur){ return Math.round(NQ.val(e, cur) * 100); }
+
+/* Le divisioni in parti uguali lasciano un resto. Viene distribuito
+   sui primi partecipanti invece di sparire: così la somma delle quote
+   è sempre esattamente il totale speso. */
+function shares(e, cur){
   var out={}, n=e.split.length;
   if(!n) return out;
-  var base=Math.floor(e.nok/n), rest=e.nok-base*n;
-  e.split.forEach(function(id,i){ out[id]=base+(i<rest?1:0); });
+  var tot=minori(e, cur);
+  var base=Math.floor(tot/n), resto=tot-base*n;
+  e.split.forEach(function(id,i){ out[id]=base+(i<resto?1:0); });
   return out;
 }
 
-NQ.balances=function(){
+/* Importi restituiti nella valuta di visualizzazione, già divisi per 100. */
+NQ.balances=function(cur){
+  cur = cur || NQ.display();
   var s=NQ.store.d, paid={}, owed={};
   s.people.forEach(function(p){ paid[p.id]=0; owed[p.id]=0; });
 
   s.exp.forEach(function(e){
-    if(paid[e.payer]!=null) paid[e.payer]+=e.nok;
-    var sh=shares(e);
+    if(paid[e.payer]!=null) paid[e.payer]+=minori(e, cur);
+    var sh=shares(e, cur);
     for(var id in sh) if(owed[id]!=null) owed[id]+=sh[id];
   });
 
   return s.people.map(function(p){
-    return { id:p.id, name:p.name, paid:paid[p.id], owed:owed[p.id],
-             net:paid[p.id]-owed[p.id] };
+    return { id:p.id, name:p.name,
+             paid:paid[p.id]/100, owed:owed[p.id]/100,
+             net:(paid[p.id]-owed[p.id])/100 };
   });
+};
+
+/* Somma di un elenco di spese nella valuta di visualizzazione. */
+NQ.totale=function(list, cur){
+  cur = cur || NQ.display();
+  var m=0;
+  list.forEach(function(e){ m += minori(e, cur); });
+  return m/100;
 };
 
 /* Abbinamento avido fra chi è in credito e chi è in debito:
    con N persone servono al più N-1 passaggi di denaro. */
-NQ.settle=function(){
-  var bal=NQ.balances();
+NQ.settle=function(cur){
+  cur = cur || NQ.display();
+  var bal=NQ.balances(cur);
   var cred=bal.filter(function(b){return b.net>0;})
-              .map(function(b){return {name:b.name, v:b.net};})
+              .map(function(b){return {name:b.name, v:Math.round(b.net*100)};})
               .sort(function(a,b){return b.v-a.v;});
   var debt=bal.filter(function(b){return b.net<0;})
-              .map(function(b){return {name:b.name, v:-b.net};})
+              .map(function(b){return {name:b.name, v:Math.round(-b.net*100)};})
               .sort(function(a,b){return b.v-a.v;});
 
   var out=[], i=0, j=0, guard=0;
   while(i<debt.length && j<cred.length && guard++<200){
     var amt=Math.min(debt[i].v, cred[j].v);
-    if(amt>0.5) out.push({ from:debt[i].name, to:cred[j].name, nok:Math.round(amt) });
+    if(amt>0) out.push({ from:debt[i].name, to:cred[j].name, amt:amt/100 });
     debt[i].v-=amt; cred[j].v-=amt;
-    if(debt[i].v<=0.5) i++;
-    if(cred[j].v<=0.5) j++;
+    if(debt[i].v<=0) i++;
+    if(cred[j].v<=0) j++;
   }
   return out;
 };
@@ -1909,6 +2042,15 @@ NQ.confetti = function(){
    a livello 11 esatto l'ultimo giorno. Da ricalibrare se cambiano i giorni. */
 NQ.LEVELS = [0,210,470,780,1150,1570,2040,2560,3150,3800,4550];
 
+/* Gli XP non si salvano: si ricavano dai giorni completati.
+   Un contatore memorizzato andrebbe fuso fra due dispositivi che
+   segnano giorni diversi, e sommare due totali darebbe il doppio. */
+NQ.xp = function(){
+  var d=NQ.store.d, tot=0;
+  NQ.DAYS.forEach(function(day){ if(d.done[day.n]) tot+=day.xp; });
+  return tot;
+};
+
 NQ.level = function(xp){
   var L=NQ.LEVELS, i=0;
   while(i<L.length-1 && xp>=L[i+1]) i++;
@@ -1917,15 +2059,16 @@ NQ.level = function(xp){
            pct: L[i+1]!=null? Math.min(100,Math.round((xp-cur)/(nxt-cur)*100)) : 100 };
 };
 
-NQ.addXP = function(n){
-  var d=NQ.store.d, before=NQ.level(d.xp).lv;
-  d.xp += n;
-  var after=NQ.level(d.xp).lv;
+/* Da chiamare intorno a una modifica dei giorni completati:
+   confronta il livello prima e dopo e festeggia se è salito. */
+NQ.withLevelUp = function(fn){
+  var before=NQ.level(NQ.xp()).lv;
+  fn();
+  var after=NQ.level(NQ.xp()).lv;
   if(after>before){
     NQ.toast('Livello '+after, 'Sei salito di livello.', true);
     NQ.chip.sting();
   }
-  NQ.store.save();
 };
 
 NQ.award = function(id){
@@ -2129,6 +2272,320 @@ NQ.zipRead = function(blob){
     return out;
   });
 };
+
+})();
+
+
+/* ==== sync.js ================================================= */
+/* ============================================================
+   NORGE QUEST — SINCRONIZZAZIONE
+   Local-first: la pagina funziona identica senza rete, e quando
+   c'è campo i due dispositivi si allineano. Non esiste un momento
+   in cui l'app aspetta il server per farti registrare una spesa.
+
+   La fusione è per singolo record, non per blocco: vince la marca
+   temporale più recente. Sostituire l'intero stato con quello remoto
+   cancellerebbe quello che l'altro ha scritto nel frattempo.
+
+   Nessun indirizzo e nessuna chiave stanno in questo file: URL del
+   database e codice viaggio li inserisce l'utente e restano sul suo
+   dispositivo. La pagina pubblica non contiene niente di personale.
+   ============================================================ */
+
+(function(){
+'use strict';
+
+/* Campi che viaggiano. Foto, trofei, audio e configurazione restano
+   locali: le prime perché pesano, gli altri perché si ricavano. */
+var CAMPI = ['done','doneTs','journal','exp','deleted','people','rate','budget','metaTs'];
+
+function ora(){ return Date.now(); }
+
+/* ---------- fusione ---------- */
+
+/* Unisce due stati. Simmetrica e idempotente: merge(a,b) e merge(b,a)
+   danno lo stesso risultato, e rifonderlo non cambia più niente. */
+function fondi(a, b){
+  a = a || {}; b = b || {};
+  var out = {
+    done:{}, doneTs:{}, journal:{}, exp:[], deleted:{},
+    people:[], rate:null, budget:null, metaTs:0
+  };
+
+  /* --- lapidi: una cancellazione non deve essere resuscitata --- */
+  [a.deleted, b.deleted].forEach(function(src){
+    if(!src) return;
+    Object.keys(src).forEach(function(id){
+      out.deleted[id] = Math.max(out.deleted[id]||0, src[id]||0);
+    });
+  });
+
+  /* --- spese: unione per id, vince la marca più recente --- */
+  var perId = {};
+  [].concat(a.exp||[], b.exp||[]).forEach(function(e){
+    if(!e || !e.id) return;
+    var prec = perId[e.id];
+    if(!prec || (e.ts||0) > (prec.ts||0)) perId[e.id] = e;
+  });
+  Object.keys(perId).forEach(function(id){
+    var e = perId[id];
+    /* la lapide vince solo se è successiva alla modifica */
+    if(out.deleted[id] && out.deleted[id] >= (e.ts||0)) return;
+    out.exp.push(e);
+  });
+  out.exp.sort(function(x,y){ return (x.ts||0)-(y.ts||0); });
+
+  /* --- diario: per giorno, vince la marca più recente --- */
+  [a.journal, b.journal].forEach(function(src){
+    if(!src) return;
+    Object.keys(src).forEach(function(g){
+      var v = src[g];
+      if(!v) return;
+      var prec = out.journal[g];
+      if(!prec || (v.ts||0) > (prec.ts||0)) out.journal[g] = v;
+    });
+  });
+
+  /* --- giorni completati: doneTs decide, così anche "non fatto" viaggia --- */
+  var giorni = {};
+  [a, b].forEach(function(src){
+    Object.keys((src && src.doneTs) || {}).forEach(function(g){ giorni[g]=1; });
+    Object.keys((src && src.done) || {}).forEach(function(g){ giorni[g]=1; });
+  });
+  Object.keys(giorni).forEach(function(g){
+    var ta = (a.doneTs&&a.doneTs[g]) || 0, tb = (b.doneTs&&b.doneTs[g]) || 0;
+    var vinc = ta >= tb ? a : b;
+    out.doneTs[g] = Math.max(ta, tb);
+    out.done[g] = !!(vinc.done && vinc.done[g]);
+  });
+
+  /* --- persone: unione per id, il nome più recente vince --- */
+  var perP = {};
+  [].concat(a.people||[], b.people||[]).forEach(function(p){
+    if(!p || !p.id) return;
+    var prec = perP[p.id];
+    if(!prec || (p.ts||0) > (prec.ts||0)) perP[p.id] = p;
+  });
+  out.people = Object.keys(perP).map(function(k){ return perP[k]; });
+  if(!out.people.length) out.people = (a.people||b.people||[]).slice();
+
+  /* --- cambio e budget: seguono metaTs --- */
+  var recente = (a.metaTs||0) >= (b.metaTs||0) ? a : b;
+  var altro   = recente === a ? b : a;
+  out.metaTs = Math.max(a.metaTs||0, b.metaTs||0);
+  out.rate   = recente.rate   != null ? recente.rate   : altro.rate;
+  out.budget = recente.budget !== undefined ? recente.budget : altro.budget;
+  if(out.rate == null) out.rate = NQ.TRIP.rate;
+
+  return out;
+}
+
+/* ---------- trasporto ---------- */
+/* API REST del Realtime Database di Firebase: nessun SDK da caricare,
+   quindi la pagina resta un file solo e senza dipendenze. */
+
+function endpoint(cfg){
+  var base = String(cfg.url||'').trim().replace(/\/+$/,'');
+  return base + '/viaggi/' + encodeURIComponent(cfg.code) + '.json';
+}
+
+function leggi(cfg){
+  return fetch(endpoint(cfg), { method:'GET', cache:'no-store' })
+    .then(function(r){
+      if(r.status===401 || r.status===403) throw errore('permessi', 'Il database rifiuta la lettura: controlla le regole di sicurezza.');
+      if(!r.ok) throw errore('http', 'Il server ha risposto ' + r.status + '.');
+      return r.json();
+    });
+}
+
+function scrivi(cfg, dati){
+  return fetch(endpoint(cfg), {
+    method:'PUT',
+    headers:{ 'Content-Type':'application/json' },
+    body: JSON.stringify(dati)
+  }).then(function(r){
+    if(r.status===401 || r.status===403) throw errore('permessi', 'Il database rifiuta la scrittura: controlla le regole di sicurezza.');
+    if(!r.ok) throw errore('http', 'Il server ha risposto ' + r.status + '.');
+    return true;
+  });
+}
+
+function errore(codice, msg){
+  var e = new Error(msg); e.codice = codice; return e;
+}
+
+/* ---------- API pubblica ---------- */
+
+var inCorso = null, attesa = null;
+
+var Sync = {
+
+  configurato:function(){
+    var c = NQ.store.d.sync || {};
+    return !!(c.url && c.code);
+  },
+
+  stato:'inattivo',   // inattivo | pronto | invio | fatto | errore | offline
+  messaggio:'',
+
+  /* Genera un codice viaggio: è di fatto una password, quindi lungo
+     e casuale. Chi lo conosce accede ai dati. */
+  nuovoCodice:function(){
+    var alfabeto='abcdefghijkmnpqrstuvwxyz23456789';
+    var out='';
+    var buf = (window.crypto && crypto.getRandomValues)
+      ? crypto.getRandomValues(new Uint8Array(28)) : null;
+    for(var i=0;i<28;i++){
+      var n = buf ? buf[i] : Math.floor(Math.random()*256);
+      out += alfabeto[n % alfabeto.length];
+    }
+    return out;
+  },
+
+  /* Stringa d'invito: un solo testo da mandare al compagno di viaggio,
+     che contiene indirizzo e codice. */
+  invito:function(){
+    var c = NQ.store.d.sync;
+    if(!this.configurato()) return '';
+    return 'NQ1:' + btoa(JSON.stringify({ u:c.url, c:c.code }))
+      .replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+  },
+
+  applicaInvito:function(testo){
+    var t = String(testo||'').trim();
+    var m = /^NQ1:([A-Za-z0-9\-_]+)$/.exec(t);
+    if(!m) throw new Error('Questo non sembra un invito di Norge Quest.');
+    var b64 = m[1].replace(/-/g,'+').replace(/_/g,'/');
+    while(b64.length % 4) b64 += '=';
+    var j;
+    try { j = JSON.parse(atob(b64)); }
+    catch(e){ throw new Error('L\'invito è danneggiato: fattelo rimandare.'); }
+    if(!j.u || !j.c) throw new Error('L\'invito è incompleto.');
+    NQ.store.d.sync.url = j.u;
+    NQ.store.d.sync.code = j.c;
+    NQ.store.save();
+    return true;
+  },
+
+  scollega:function(){
+    NQ.store.d.sync = { url:'', code:'', last:0, auto:true };
+    NQ.store.save();
+    this.stato='inattivo'; this.messaggio='';
+  },
+
+  /* Un giro completo: leggo il remoto, fondo, salvo, riscrivo.
+     Se la rete non c'è non succede niente di male: i dati restano
+     dove sono e si riproverà al prossimo giro. */
+  ora:function(silenzioso){
+    var self=this;
+    if(!this.configurato()){
+      this.stato='inattivo';
+      return Promise.resolve(false);
+    }
+    if(inCorso) return inCorso;
+
+    if(!navigator.onLine){
+      this.stato='offline';
+      this.messaggio='Nessuna rete. I dati restano qui e si allineano appena c\'è campo.';
+      this.aggiornaUI();
+      return Promise.resolve(false);
+    }
+
+    var cfg = NQ.store.d.sync;
+    this.stato='invio'; this.messaggio='Sincronizzo…';
+    this.aggiornaUI();
+
+    inCorso = leggi(cfg).then(function(remoto){
+      var locale = self.estrai();
+      var unito  = fondi(locale, remoto);
+
+      self.applica(unito);
+      NQ.store.d.sync.last = ora();
+      NQ.store.save();
+
+      return scrivi(cfg, self.estrai()).then(function(){
+        self.stato='fatto';
+        self.messaggio='Allineato.';
+        if(!silenzioso) NQ.toast('Sincronizzato', descrivi(unito));
+        NQ.checkTrophies();
+        NQ.renderHud();
+        NQ.ridisegnaVistaCorrente();
+        return true;
+      });
+    }).catch(function(e){
+      self.stato = e.codice==='permessi' ? 'errore' : 'offline';
+      self.messaggio = e.codice==='permessi'
+        ? e.message
+        : 'Non raggiungo il database. Riprovo più tardi: i dati sono al sicuro qui.';
+      if(!silenzioso) NQ.toast('Non sincronizzato', self.messaggio);
+      return false;
+    }).then(function(r){
+      inCorso=null;
+      self.aggiornaUI();
+      return r;
+    });
+
+    return inCorso;
+  },
+
+  /* Le modifiche non vanno spedite una per una: si accumulano
+     qualche secondo e poi partono insieme. */
+  programma:function(){
+    var self=this;
+    if(!this.configurato() || !NQ.store.d.sync.auto) return;
+    clearTimeout(attesa);
+    attesa = setTimeout(function(){ self.ora(true); }, 4000);
+  },
+
+  estrai:function(){
+    var d=NQ.store.d, out={};
+    CAMPI.forEach(function(k){ out[k] = d[k]; });
+    out.v = 5;
+    return out;
+  },
+
+  applica:function(u){
+    var d=NQ.store.d;
+    CAMPI.forEach(function(k){ if(u[k] !== undefined) d[k]=u[k]; });
+    /* Firebase non conserva gli array vuoti né le chiavi nulle */
+    if(!Array.isArray(d.exp)) d.exp = [];
+    /* una spesa che arriva da un dispositivo con una versione più
+       vecchia parla ancora in corone: va riportata alla forma corrente */
+    d.exp.forEach(NQ.normalizzaSpesa);
+    if(!d.deleted) d.deleted = {};
+    if(!d.done) d.done = {};
+    if(!d.doneTs) d.doneTs = {};
+    if(!d.journal) d.journal = {};
+    if(!Array.isArray(d.people) || !d.people.length)
+      d.people = NQ.store.blank().people;
+  },
+
+  aggiornaUI:function(){
+    var el=NQ.$('#syncstate');
+    if(el) el.innerHTML = this.riga();
+  },
+
+  riga:function(){
+    var c=NQ.store.d.sync||{};
+    if(!this.configurato())
+      return '<span class="sdot off"></span>Non collegato';
+    var quando = c.last ? new Date(c.last).toLocaleString('it-IT',
+      { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' }) : 'mai';
+    var cls = this.stato==='fatto' ? 'ok' : this.stato==='errore' ? 'bad'
+            : this.stato==='invio' ? 'busy' : 'warn';
+    return '<span class="sdot '+cls+'"></span>' +
+           NQ.esc(this.messaggio || 'Collegato') +
+           ' <s>ultimo allineamento: '+quando+'</s>';
+  }
+};
+
+function descrivi(u){
+  return (u.exp?u.exp.length:0)+' spese · '+
+         Object.keys(u.journal||{}).length+' giorni di diario';
+}
+
+NQ.sync = Sync;
+NQ.fondiStati = fondi;   // esposta per i test
 
 })();
 
@@ -2532,13 +2989,13 @@ function dateLabel(day){
    ============================================================ */
 
 NQ.renderHud=function(){
-  var s=d(), L=NQ.level(s.xp);
+  var s=d(), xp=NQ.xp(), L=NQ.level(xp);
   var done=Object.keys(s.done).filter(function(k){return s.done[k];}).length;
   var tro=Object.keys(s.trophies).length;
 
   $('#lvl').textContent='LV '+L.lv;
   $('#xpfill').style.width=L.pct+'%';
-  $('#xptxt').innerHTML='<b>'+s.xp+'</b> XP';
+  $('#xptxt').innerHTML='<b>'+xp+'</b> XP';
   $('#stDays').innerHTML='<b>'+done+'</b>/15 giorni';
   $('#stTro').innerHTML='<b>'+tro+'</b>/'+NQ.TROPHIES.length+' 🏆';
   var mb=$('#muteBtn');
@@ -2742,10 +3199,12 @@ NQ.openDay=function(n){
   h+='<div class="pxbox"><h3>Costi attesi</h3><div class="exlist">';
   day.costs.forEach(function(c){
     h+='<div class="exrow"><span class="en">'+esc(c[0])+'</span>'+
-       '<span class="ea money">'+nok(c[1])+' kr</span></div>';
+       '<span class="ea money">'+NQ.fmt(NQ.daNok(c[1]))+'</span></div>';
   });
-  h+='</div><p class="small muted mt" style="margin-bottom:0">Totale indicativo <b>'+nok(tot)+' kr</b> '+
-     '≈ '+NQ.eur(tot,rate())+' €. Stime, non preventivi.</p></div>';
+  h+='</div><p class="small muted mt" style="margin-bottom:0">Totale indicativo <b>'+
+     NQ.fmt(NQ.daNok(tot))+'</b>. Sono stime raccolte in corone, non preventivi'+
+     (NQ.display()==='eur'? ' — qui convertite al cambio che hai impostato.' : '.')+
+     '</p></div>';
 
   if(day.sleep && day.sleep!=='—'){
     h+='<div class="pxbox lo"><h3>Dove si dorme</h3><p style="margin:0">'+esc(day.sleep)+'</p></div>';
@@ -2766,17 +3225,16 @@ NQ.openDay=function(n){
 
 NQ.toggleDay=function(n){
   var s=d(), day=dayByN(n);
-  if(s.done[n]){
-    delete s.done[n];
-    s.xp=Math.max(0, s.xp-day.xp);
+  /* done[n] resta a false invece di sparire: solo così la fusione sa
+     distinguere "l'altro non l'ha ancora fatto" da "l'ho annullato io". */
+  NQ.withLevelUp(function(){
+    s.done[n] = !s.done[n];
+    s.doneTs[n] = Date.now();
     NQ.store.save();
-  } else {
-    s.done[n]=true;
-    NQ.store.save();
-    NQ.addXP(day.xp);
-    NQ.toast('Giorno '+n+' completato','+'+day.xp+' XP');
-  }
+  });
+  if(s.done[n]) NQ.toast('Giorno '+n+' completato','+'+day.xp+' XP');
   NQ.checkTrophies();
+  NQ.sync.programma();
   NQ.renderHud();
   NQ.openDay(n);
 };
@@ -3051,6 +3509,7 @@ function grab(){
   var t=$('#jtxt'), k=$('#jkm');
   if(t) e.txt=t.value;
   if(k) e.km=k.value;
+  e.ts=Date.now();          // serve alla fusione per sapere chi ha scritto per ultimo
   s.journal[jDay]=e;
   return e;
 }
@@ -3067,9 +3526,9 @@ NQ.setWx=function(i){
 };
 
 NQ.saveJournal=function(){
-  var e=grab();
-  e.ts=Date.now();
+  grab();
   NQ.store.save();
+  NQ.sync.programma();
   NQ.checkTrophies();
   NQ.renderHud();
   NQ.toast('Salvato','Giorno '+jDay+' aggiornato');
@@ -3173,8 +3632,10 @@ NQ.showStorage=function(){
 /* ============================================================
    TESORO — spese condivise
    Chi ha anticipato cosa, quanto spetta a ciascuno, e come si pareggia.
-   Le spese fatte prima di partire (camper, voli, prenotazioni) stanno
-   nel giorno 0.
+   Le spese fatte prima di partire stanno nel giorno 0.
+
+   Ogni importo resta nella valuta in cui è stato inserito: quello che
+   scegli qui sotto è solo come lo vuoi vedere.
    ============================================================ */
 
 var splitSel = null;     // partecipanti selezionati nel modulo di inserimento
@@ -3187,11 +3648,20 @@ function dayName(n){
   return 'Giorno '+n+' · '+dd.to;
 }
 
-function totalOf(list){ return list.reduce(function(a,e){ return a+e.nok; },0); }
+function cur(){ return NQ.display(); }
+function fmt(v){ return NQ.fmt(v); }
+function altra(){ return cur()==='eur' ? 'nok' : 'eur'; }
+
+NQ.setDisplay=function(c){
+  if(!NQ.CUR[c]) return;
+  d().display=c;
+  NQ.store.save();
+  NQ.renderMoney();
+};
 
 NQ.renderMoney=function(){
-  var s=d(), r=rate(), people=s.people;
-  var tot=totalOf(s.exp);
+  var s=d(), people=s.people, C=cur();
+  var tot=NQ.totale(s.exp);
   var pre=s.exp.filter(function(e){ return e.day===0; });
   var trip=s.exp.filter(function(e){ return e.day>0; });
 
@@ -3199,23 +3669,31 @@ NQ.renderMoney=function(){
 
   var h='';
 
+  /* ---- valuta di visualizzazione ---- */
+  h+='<div class="seg curseg">'+
+       '<button class="'+(C==='eur'?'on':'')+'" onclick="NQ.setDisplay(\'eur\')">€ Euro</button>'+
+       '<button class="'+(C==='nok'?'on':'')+'" onclick="NQ.setDisplay(\'nok\')">kr Corone</button>'+
+     '</div>';
+
   /* ---- totale ---- */
   var elapsed = NQ.phase()==='pre'? 0 : NQ.phase()==='post'? 15 : Math.max(1,NQ.dayIndex()+1);
   h+='<div class="pxbox total">'+
-       '<div class="amt money">'+nok(tot)+' kr</div>'+
-       '<div class="sub">≈ <b>'+NQ.eur(tot,r)+' €</b>'+
-         (people.length>1? ' · '+nok(tot/people.length)+' kr a testa':'')+'</div>'+
-       (pre.length? '<div class="sub small">di cui '+nok(totalOf(pre))+' kr spesi prima di partire</div>':'')+
-       (elapsed&&trip.length? '<div class="sub small">'+nok(totalOf(trip)/elapsed)+' kr al giorno in viaggio</div>':'')+
+       '<div class="amt money">'+fmt(tot)+'</div>'+
+       '<div class="sub">'+
+         (people.length>1? fmt(tot/people.length)+' a testa' : '')+
+       '</div>'+
+       (pre.length? '<div class="sub small">di cui '+fmt(NQ.totale(pre))+' spesi prima di partire</div>':'')+
+       (elapsed&&trip.length? '<div class="sub small">'+fmt(NQ.totale(trip)/elapsed)+' al giorno in viaggio</div>':'')+
      '</div>';
 
   /* ---- budget ---- */
   if(s.budget){
-    var left=s.budget-tot, pct=Math.max(0,Math.min(100,Math.round(tot/s.budget*100)));
+    var bud=NQ.daNok(s.budget);      // il budget resta memorizzato in corone
+    var left=bud-tot, pct=Math.max(0,Math.min(100,Math.round(tot/bud*100)));
     h+='<div class="pxbox"><div class="catrow">'+
-         '<div class="cl"><span>Budget '+nok(s.budget)+' kr</span>'+
+         '<div class="cl"><span>Budget '+fmt(bud)+'</span>'+
          '<span class="money" style="color:'+(left<0?'var(--red)':'var(--green)')+'">'+
-         (left<0? 'sforato di '+nok(-left) : 'restano '+nok(left))+' kr</span></div>'+
+         (left<0? 'sforato di '+fmt(-left) : 'restano '+fmt(left))+'</span></div>'+
          '<div class="cbar"><div class="cfill" style="width:'+pct+'%;background:'+
          (left<0?'var(--red)':'var(--green)')+'"></div></div>'+
        '</div></div>';
@@ -3226,11 +3704,11 @@ NQ.renderMoney=function(){
     var bal=NQ.balances(), moves=NQ.settle();
     h+='<div class="pxbox"><h3>Come siamo messi</h3><div class="bal">';
     bal.forEach(function(b){
-      var cls = b.net>0.5? 'up' : b.net<-0.5? 'down' : '';
+      var cls = b.net>0.005? 'up' : b.net<-0.005? 'down' : '';
       h+='<div class="balrow">'+
            '<span class="bn">'+esc(b.name)+'</span>'+
-           '<span class="bd">ha anticipato <b class="money">'+nok(b.paid)+'</b> · gli spetta <b class="money">'+nok(b.owed)+'</b></span>'+
-           '<span class="bnet '+cls+' money">'+(b.net>0?'+':'')+nok(b.net)+'</span>'+
+           '<span class="bd">ha anticipato <b class="money">'+fmt(b.paid)+'</b> · gli spetta <b class="money">'+fmt(b.owed)+'</b></span>'+
+           '<span class="bnet '+cls+' money">'+(b.net>0?'+':'')+fmt(b.net)+'</span>'+
          '</div>';
     });
     h+='</div>';
@@ -3246,7 +3724,7 @@ NQ.renderMoney=function(){
              '<span class="sfrom">'+esc(m.from)+'</span>'+
              '<span class="sarr">→</span>'+
              '<span class="sto">'+esc(m.to)+'</span>'+
-             '<span class="samt money">'+nok(m.nok)+' kr <s>≈ '+NQ.eur(m.nok,r)+' €</s></span>'+
+             '<span class="samt money">'+fmt(m.amt)+'</span>'+
            '</div>';
       });
       h+='</div>';
@@ -3256,7 +3734,7 @@ NQ.renderMoney=function(){
 
   /* ---- grafico per categoria ---- */
   var byCat={};
-  s.exp.forEach(function(e){ byCat[e.cat]=(byCat[e.cat]||0)+e.nok; });
+  s.exp.forEach(function(e){ byCat[e.cat]=(byCat[e.cat]||0)+NQ.val(e); });
   var cats=Object.keys(NQ.CATS)
     .filter(function(k){ return byCat[k]; })
     .sort(function(a,b){ return byCat[b]-byCat[a]; });
@@ -3268,7 +3746,7 @@ NQ.renderMoney=function(){
       var c=NQ.CATS[k], v=byCat[k];
       h+='<div class="crow">'+
            '<div class="cl"><span>'+c.icon+' '+esc(c.name)+'</span>'+
-           '<span class="money">'+nok(v)+' kr <s>'+Math.round(v/tot*100)+'%</s></span></div>'+
+           '<span class="money">'+fmt(v)+' <s>'+Math.round(v/tot*100)+'%</s></span></div>'+
            '<div class="cbar"><div class="cfill" style="width:'+Math.max(2,Math.round(v/maxCat*100))+'%;background:'+c.color+'"></div></div>'+
          '</div>';
     });
@@ -3276,28 +3754,25 @@ NQ.renderMoney=function(){
   }
 
   /* ---- grafico per giorno ---- */
-  /* Una sola serie, un solo colore. Impilare nove categorie qui
-     significherebbe affidare l'identità al colore in segmenti senza
-     etichetta, e con nove tinte due coppie diventano indistinguibili
-     per chi ha un deficit di visione dei colori. La composizione si
-     legge nel grafico sopra e nel dettaglio di ogni colonna. */
+  /* Una sola serie, un solo colore: con nove categorie i segmenti
+     impilati diventerebbero indistinguibili per chi ha un deficit di
+     visione dei colori, e non hanno etichette proprie. */
   if(s.exp.length){
     var byDay=[];
     for(var n=0;n<=15;n++){
       var list=s.exp.filter(function(e){ return e.day===n; });
       var per={};
-      list.forEach(function(e){ per[e.cat]=(per[e.cat]||0)+e.nok; });
-      byDay.push({ n:n, tot:totalOf(list), per:per });
+      list.forEach(function(e){ per[e.cat]=(per[e.cat]||0)+NQ.val(e); });
+      byDay.push({ n:n, tot:NQ.totale(list), per:per });
     }
-    var maxDay=Math.max.apply(null, byDay.map(function(x){return x.tot;}).concat([1]));
+    var maxDay=Math.max.apply(null, byDay.map(function(x){return x.tot;}).concat([0.01]));
     var peak=byDay.filter(function(x){ return x.tot===maxDay; })[0];
 
-    h+='<div class="pxbox"><h3>Quanto è costato ogni giorno</h3>'+
-       '<div class="daychart">';
+    h+='<div class="pxbox"><h3>Quanto è costato ogni giorno</h3><div class="daychart">';
     byDay.forEach(function(dd){
-      var tip = dayName(dd.n)+' — '+nok(dd.tot)+' kr';
+      var tip = dayName(dd.n)+' — '+fmt(dd.tot);
       var det = Object.keys(NQ.CATS).filter(function(k){ return dd.per[k]; })
-        .map(function(k){ return NQ.CATS[k].name+' '+nok(dd.per[k]); });
+        .map(function(k){ return NQ.CATS[k].name+' '+fmt(dd.per[k]); });
       if(det.length) tip += '\n'+det.join('\n');
       h+='<div class="dcol" title="'+esc(tip)+'">'+
            '<div class="dstack">'+
@@ -3308,7 +3783,7 @@ NQ.renderMoney=function(){
          '</div>';
     });
     h+='</div><p class="small muted" style="margin:10px 0 0">'+
-       (peak && peak.tot? 'Giornata più cara: <b>'+esc(dayName(peak.n))+'</b>, '+nok(peak.tot)+' kr. ' : '')+
+       (peak && peak.tot? 'Giornata più cara: <b>'+esc(dayName(peak.n))+'</b>, '+fmt(peak.tot)+'. ' : '')+
        'Tocca una colonna per il dettaglio per categoria.</p></div>';
   }
 
@@ -3316,10 +3791,13 @@ NQ.renderMoney=function(){
   h+='<div class="pxbox"><h3>Aggiungi spesa</h3>'+
        '<div class="row">'+
          '<div style="flex:2"><label for="exLabel">Descrizione</label><input type="text" id="exLabel" placeholder="Es. traghetto Lavik"></div>'+
-         '<div style="flex:1"><label for="exAmt">Importo</label><input type="number" id="exAmt" inputmode="decimal" placeholder="0"></div>'+
+         '<div style="flex:1"><label for="exAmt">Importo</label><input type="number" step="0.01" id="exAmt" inputmode="decimal" placeholder="0"></div>'+
        '</div>'+
        '<div class="row mt">'+
-         '<div><label for="exCur">Valuta</label><select id="exCur"><option value="nok">NOK</option><option value="eur">EUR</option></select></div>'+
+         '<div><label for="exCur">Valuta pagata</label><select id="exCur">'+
+           '<option value="eur"'+(C==='eur'?' selected':'')+'>€ euro</option>'+
+           '<option value="nok"'+(C==='nok'?' selected':'')+'>kr corone</option>'+
+         '</select></div>'+
          '<div><label for="exCat">Categoria</label><select id="exCat">';
   Object.keys(NQ.CATS).forEach(function(k){
     h+='<option value="'+k+'">'+NQ.CATS[k].icon+' '+esc(NQ.CATS[k].name)+'</option>';
@@ -3327,12 +3805,14 @@ NQ.renderMoney=function(){
   h+='</select></div>'+
          '<div><label for="exDay">Quando</label><select id="exDay">'+
            '<option value="0">Prima di partire</option>';
-  var cur = NQ.dayIndex()>=0? NQ.DAYS[NQ.dayIndex()].n : (NQ.phase()==='pre'? 0 : 15);
+  var curDay = NQ.dayIndex()>=0? NQ.DAYS[NQ.dayIndex()].n : (NQ.phase()==='pre'? 0 : 15);
   NQ.DAYS.forEach(function(dd){
-    h+='<option value="'+dd.n+'"'+(dd.n===cur?' selected':'')+'>G'+dd.n+' · '+esc(dd.to)+'</option>';
+    h+='<option value="'+dd.n+'"'+(dd.n===curDay?' selected':'')+'>G'+dd.n+' · '+esc(dd.to)+'</option>';
   });
   h+='</select></div>'+
-       '</div>';
+       '</div>'+
+       '<p class="small muted" style="margin:8px 0 0">La valuta è quella con cui hai <b>pagato davvero</b>. '+
+       'L\'importo resta esattamente quello: non viene convertito e poi riconvertito.</p>';
 
   if(people.length>1){
     h+='<div class="row mt">'+
@@ -3352,6 +3832,32 @@ NQ.renderMoney=function(){
 
   h+='<button class="pxbtn go mt" onclick="NQ.addExpense()">+ Registra</button></div>';
 
+  /* ---- sincronizzazione ---- */
+  h+='<div class="pxbox"><h3>Sincronizzazione</h3>'+
+       '<div class="syncrow" id="syncstate">'+NQ.sync.riga()+'</div>';
+
+  if(NQ.sync.configurato()){
+    h+='<div class="row mt">'+
+         '<button class="pxbtn go" onclick="NQ.sync.ora()">🔄 Allinea adesso</button>'+
+         '<button class="pxbtn" onclick="NQ.mostraInvito()">🔗 Invita</button>'+
+       '</div>'+
+       '<p class="small muted mt" style="margin-bottom:0">'+
+       'Le modifiche partono da sole qualche secondo dopo che le fai, quando c\'è campo. '+
+       'Senza rete resta tutto qui e si allinea al primo segnale. '+
+       '<b>Le foto non si sincronizzano</b>: sono troppo pesanti, restano su questo dispositivo.</p>'+
+       '<button class="pxbtn sm mt" onclick="NQ.scollegaSync()">Scollega questo dispositivo</button>';
+  } else {
+    h+='<p class="small muted mt">Non collegato. Spese e diario restano solo qui. '+
+       'Per condividerli con chi viaggia con te serve una configurazione da fare una volta sola.</p>'+
+       '<div class="row">'+
+         '<button class="pxbtn go" onclick="NQ.go(\'guide\')">Come si configura ›</button>'+
+       '</div>'+
+       '<div class="mt"><label for="invcode">Hai ricevuto un invito? Incollalo qui</label>'+
+         '<input type="text" id="invcode" placeholder="NQ1:…"></div>'+
+       '<button class="pxbtn mt" onclick="NQ.applicaInvito()">Collega questo dispositivo</button>';
+  }
+  h+='</div>';
+
   /* ---- movimenti ---- */
   if(s.exp.length){
     var shown = expFilter==='pre'? pre : expFilter==='trip'? trip : s.exp;
@@ -3368,12 +3874,16 @@ NQ.renderMoney=function(){
         ? ' · solo '+e.split.map(function(id){
             return (people.filter(function(p){return p.id===id;})[0]||{}).name; }).join(', ')
         : '';
+      /* se l'hai pagata in un'altra valuta, l'originale resta visibile:
+         è quello che ritrovi sull'estratto conto */
+      var orig = (e.cur||'nok')!==C
+        ? '<s>pagata '+NQ.fmt(e.amt, e.cur)+'</s>' : '';
       h+='<div class="exrow">'+
            '<span class="ei" style="color:'+c.color+'">'+c.icon+'</span>'+
            '<span class="en">'+esc(e.label)+
-             (people.length>1? '<s>'+esc(who||'?')+esc(part)+'</s>':'')+'</span>'+
+             (people.length>1? '<s>'+esc(who||'?')+esc(part)+'</s>':'')+orig+'</span>'+
            '<span class="ed">'+dayLabel(e.day)+'</span>'+
-           '<span class="ea money">'+nok(e.nok)+' kr</span>'+
+           '<span class="ea money">'+fmt(NQ.val(e))+'</span>'+
            '<button class="ex" onclick="NQ.delExpense(\''+e.id+'\')" aria-label="Elimina">✕</button>'+
          '</div>';
     });
@@ -3393,12 +3903,63 @@ NQ.renderMoney=function(){
   h+='</div><button class="pxbtn sm mt" onclick="NQ.addPerson()">+ Aggiungi persona</button>';
 
   h+='<div class="row mt">'+
-       '<div><label for="exRate">Cambio: NOK per 1 €</label><input type="number" step="0.01" id="exRate" value="'+r+'" onchange="NQ.setRate(this.value)"></div>'+
+       '<div><label for="exRate">Cambio: NOK per 1 €</label><input type="number" step="0.01" id="exRate" value="'+NQ.rate()+'" onchange="NQ.setRate(this.value)"></div>'+
        '<div><label for="exBud">Budget totale in NOK</label><input type="number" id="exBud" placeholder="nessuno" value="'+(s.budget||'')+'" onchange="NQ.setBudget(this.value)"></div>'+
      '</div>'+
-     '<p class="small muted mt" style="margin-bottom:0">Il cambio è fisso e funziona offline. Aggiornalo a mano quando hai campo.</p></div>';
+     '<p class="small muted mt" style="margin-bottom:0">Il cambio serve solo a mettere insieme spese fatte in valute diverse. '+
+     'Cambiarlo <b>non tocca</b> gli importi che hai registrato: quelli restano come li hai inseriti.</p></div>';
 
   $('#v-money').innerHTML=h;
+};
+
+NQ.applicaInvito=function(){
+  var el=$('#invcode'); if(!el) return;
+  try{
+    NQ.sync.applicaInvito(el.value);
+    NQ.toast('Collegato','Allineo i dati…');
+    NQ.sync.ora();
+  }catch(e){
+    NQ.toast('Invito non valido', e.message);
+  }
+};
+
+NQ.mostraInvito=function(){
+  var inv=NQ.sync.invito();
+  if(!inv) return;
+  var box=$('#modal'), body=$('#modalbody');
+  body.innerHTML =
+    '<h2>Invita chi viaggia con te</h2>'+
+    '<p class="small muted">Mandagli questa stringa. La incolla nella sua copia dell\'app, '+
+    'alla voce Sincronizzazione, e da quel momento vedete gli stessi dati.</p>'+
+    '<textarea readonly id="invout" style="min-height:96px">'+esc(inv)+'</textarea>'+
+    '<div class="row mt">'+
+      '<button class="pxbtn go" onclick="NQ.copiaInvito()">📋 Copia</button>'+
+      '<button class="pxbtn" onclick="NQ.chiudiModal()">Chiudi</button>'+
+    '</div>'+
+    '<p class="small muted mt" style="margin-bottom:0">⚠ Questa stringa contiene il codice del viaggio, '+
+    'che funziona come una password: chi ce l\'ha vede e modifica i vostri dati. Mandala solo a lui.</p>';
+  box.classList.add('open');
+};
+
+NQ.copiaInvito=function(){
+  var t=$('#invout'); if(!t) return;
+  t.select(); t.setSelectionRange(0, 99999);
+  var fatto=false;
+  try{ fatto=document.execCommand('copy'); }catch(e){}
+  if(!fatto && navigator.clipboard){
+    navigator.clipboard.writeText(t.value).then(function(){ NQ.toast('Copiato',''); });
+    return;
+  }
+  NQ.toast(fatto?'Copiato':'Copia a mano', fatto?'Invito negli appunti':'Selezionalo e copialo');
+};
+
+NQ.chiudiModal=function(){ $('#modal').classList.remove('open'); };
+
+NQ.scollegaSync=function(){
+  if(!confirm('Scollegare questo dispositivo?\n\nI dati che hai qui restano dove sono, ma smettono di allinearsi con l\'altro.')) return;
+  NQ.sync.scollega();
+  NQ.renderMoney();
+  NQ.toast('Scollegato','I dati restano su questo dispositivo');
 };
 
 function segBtn(id,label,count){
@@ -3421,10 +3982,14 @@ NQ.addExpense=function(){
   var label=$('#exLabel').value.trim();
   var amt=parseFloat($('#exAmt').value);
   if(!amt || amt<=0){ NQ.toast('','Manca l\'importo'); return; }
-  var cur=$('#exCur').value;
+  var valuta=$('#exCur').value;
+  if(!NQ.CUR[valuta]) valuta='eur';
   var payerEl=$('#exPayer');
+  /* l'importo si salva com'è, con la sua valuta: nessuna conversione
+     al momento dell'inserimento, così l'estratto conto torna sempre */
   push(label||'Spesa',
-       cur==='eur'? amt*rate() : amt,
+       Math.round(amt*100)/100,
+       valuta,
        $('#exCat').value,
        +$('#exDay').value,
        payerEl? payerEl.value : d().people[0].id,
@@ -3432,37 +3997,44 @@ NQ.addExpense=function(){
   $('#exLabel').value=''; $('#exAmt').value='';
 };
 
-function push(label,nokAmt,cat,day,payer,split){
+function push(label,amt,valuta,cat,day,payer,split){
   var s=d();
-  s.exp.push({ id:NQ.uid(), label:label, nok:Math.round(nokAmt), cat:cat,
+  s.exp.push({ id:NQ.uid(), label:label, amt:amt, cur:valuta, cat:cat,
                day:day, payer:payer, split:split, ts:Date.now() });
   NQ.store.save();
   NQ.checkTrophies();
+  NQ.sync.programma();
   NQ.renderHud();
   NQ.renderMoney();
-  NQ.toast('Registrata', label+' · '+nok(nokAmt)+' kr');
+  NQ.toast('Registrata', label+' · '+NQ.fmt(amt, valuta));
 }
 
+/* Cancellare non basta a togliere: senza lapide, alla prima fusione
+   la spesa tornerebbe indietro dal dispositivo dell'altro. */
 NQ.delExpense=function(id){
   var s=d();
   s.exp=s.exp.filter(function(e){ return e.id!==id; });
-  NQ.store.save(); NQ.renderMoney();
+  s.deleted[id]=Date.now();
+  NQ.store.save();
+  NQ.sync.programma();
+  NQ.renderMoney();
 };
 
 NQ.setPerson=function(id,name){
   var s=d(), p=s.people.filter(function(x){return x.id===id;})[0];
   if(!p) return;
   p.name=(name||'').trim()||'Senza nome';
-  NQ.store.save(); NQ.renderMoney();
+  p.ts=Date.now();
+  NQ.store.save(); NQ.sync.programma(); NQ.renderMoney();
 };
 
 NQ.addPerson=function(){
   var s=d();
   if(s.people.length>=6){ NQ.toast('','Sei persone bastano'); return; }
   var id='p'+(Date.now().toString(36));
-  s.people.push({ id:id, name:'Persona '+(s.people.length+1) });
+  s.people.push({ id:id, name:'Persona '+(s.people.length+1), ts:Date.now() });
   splitSel.push(id);
-  NQ.store.save(); NQ.renderMoney();
+  NQ.store.save(); NQ.sync.programma(); NQ.renderMoney();
 };
 
 NQ.delPerson=function(id){
@@ -3481,12 +4053,13 @@ NQ.delPerson=function(id){
 
 NQ.setRate=function(v){
   var n=parseFloat(v);
-  if(n>0){ d().rate=n; NQ.store.save(); NQ.renderMoney(); }
+  if(n>0){ d().rate=n; d().metaTs=Date.now(); NQ.store.save(); NQ.sync.programma(); NQ.renderMoney(); }
 };
 NQ.setBudget=function(v){
   var n=parseFloat(v);
   d().budget = n>0? n : null;
-  NQ.store.save(); NQ.renderMoney();
+  d().metaTs=Date.now();
+  NQ.store.save(); NQ.sync.programma(); NQ.renderMoney();
 };
 
 /* ============================================================
@@ -3522,9 +4095,52 @@ NQ.renderGuide=function(){
          '<div class="ci"><div class="cl">yr.no</div><div>Meteo nazionale, il più affidabile in montagna</div></div>'+
        '</div></div>';
 
+  /* ---- configurazione della sincronizzazione ---- */
+  var sy=d().sync||{};
+  h+='<details class="acc"><summary><span class="gi">🔄</span>Sincronizzare fra due dispositivi</summary>'+
+       '<div class="accb">'+
+       '<p>Di base ogni dispositivo tiene i propri dati e non parla con nessuno: è il motivo per cui '+
+       'l\'app funziona nei tunnel e nei fiordi senza campo. Per condividere spese e diario con chi '+
+       'viaggia con te serve un database, e va creato una volta sola. È gratuito.</p>'+
+       '<p><b>Chi fa la configurazione la fa una volta.</b> L\'altro riceve un invito e incolla quello: '+
+       'non deve toccare niente.</p>'+
+       '<h4>1. Crea il database</h4>'+
+       '<p>Vai su <b>console.firebase.google.com</b> con un account Google e crea un progetto '+
+       '(il nome è indifferente, puoi saltare Google Analytics). Poi nel menu a sinistra: '+
+       '<b>Build → Realtime Database → Create Database</b>. Scegli la regione europea e avvia '+
+       'in <b>locked mode</b>.</p>'+
+       '<h4>2. Imposta i permessi</h4>'+
+       '<p>Nella scheda <b>Rules</b> incolla questo al posto di quello che c\'è, e premi Publish:</p>'+
+       '<pre class="code">{\n'+
+       '  "rules": {\n'+
+       '    "viaggi": {\n'+
+       '      "$codice": {\n'+
+       '        ".read":  "$codice.length >= 24",\n'+
+       '        ".write": "$codice.length >= 24"\n'+
+       '      }\n'+
+       '    }\n'+
+       '  }\n'+
+       '}</pre>'+
+       '<p class="small">Così si entra solo conoscendo il codice del viaggio, e nessuno può elencare '+
+       'i viaggi altrui. Il codice è lungo e casuale: di fatto è una password.</p>'+
+       '<h4>3. Incolla qui l\'indirizzo</h4>'+
+       '<p class="small">In cima alla pagina del database c\'è un indirizzo che finisce per '+
+       '<i>firebasedatabase.app</i> o <i>firebaseio.com</i>. Copialo qui sotto.</p>'+
+       '<label for="syncurl">Indirizzo del database</label>'+
+       '<input type="text" id="syncurl" placeholder="https://…firebasedatabase.app" value="'+esc(sy.url||'')+'">'+
+       '<div class="mt"><label for="synccode">Codice del viaggio</label>'+
+         '<input type="text" id="synccode" placeholder="generane uno" value="'+esc(sy.code||'')+'"></div>'+
+       '<div class="row mt">'+
+         '<button class="pxbtn" onclick="NQ.generaCodice()">🎲 Genera codice</button>'+
+         '<button class="pxbtn go" onclick="NQ.salvaSync()">Salva e collega</button>'+
+       '</div>'+
+       '<p class="small muted mt" style="margin-bottom:0">Indirizzo e codice restano su questo dispositivo. '+
+       'Non finiscono nella pagina pubblicata: chi apre il link non ha modo di raggiungere i tuoi dati.</p>'+
+       '</div></details>';
+
   h+='<div class="pxbox"><h3>Dati e impostazioni</h3>'+
-       '<p class="small muted">Tutto quello che scrivi resta in questo browser, su questo dispositivo. '+
-       'Niente server, niente account, nessun dato che esce da qui.</p>'+
+       '<p class="small muted">Quello che scrivi resta in questo browser. Se attivi la sincronizzazione, '+
+       'spese e diario vengono condivisi con il dispositivo collegato — le foto no, quelle restano qui.</p>'+
        '<div class="row">'+
          '<button class="pxbtn" onclick="NQ.exportZIP()">📦 Scarica l\'album</button>'+
          '<button class="pxbtn warn" onclick="NQ.wipe()">🗑 Cancella tutto</button>'+
@@ -3540,6 +4156,28 @@ NQ.renderGuide=function(){
      '</p></div>';
 
   $('#v-guide').innerHTML=h;
+};
+
+NQ.generaCodice=function(){
+  var el=$('#synccode'); if(el) el.value=NQ.sync.nuovoCodice();
+};
+
+NQ.salvaSync=function(){
+  var url=($('#syncurl').value||'').trim().replace(/\/+$/,'');
+  var code=($('#synccode').value||'').trim();
+  if(!/^https:\/\/.+/.test(url)){
+    NQ.toast('Indirizzo non valido','Deve cominciare con https:// e finire con firebasedatabase.app o firebaseio.com');
+    return;
+  }
+  if(code.length<24){
+    NQ.toast('Codice troppo corto','Servono almeno 24 caratteri. Usa il generatore.');
+    return;
+  }
+  var s=d();
+  s.sync.url=url; s.sync.code=code;
+  NQ.store.save();
+  NQ.toast('Collegato','Provo il primo allineamento…');
+  NQ.sync.ora();
 };
 
 })();
@@ -3566,7 +4204,15 @@ var VIEWS={
   day:    { el:'#v-day',     render:null,             music:null,    tab:null    }
 };
 
-var lastTab='map';
+var lastTab='map', vistaCorrente='map';
+
+/* La sincronizzazione può cambiare i dati mentre stai guardando una
+   vista: va ridisegnata, ma solo quella, e mai la scheda giorno aperta
+   (ridisegnarla ti sbatterebbe fuori da dove stai leggendo). */
+NQ.ridisegnaVistaCorrente=function(){
+  var v=VIEWS[vistaCorrente];
+  if(v && v.render && vistaCorrente!=='day') v.render();
+};
 
 NQ.go=function(name, arg, prerendered){
   var v=VIEWS[name]; if(!v) return;
@@ -3577,6 +4223,7 @@ NQ.go=function(name, arg, prerendered){
   NQ.$$('.view').forEach(function(el){ el.classList.remove('active'); });
   $(v.el).classList.add('active');
 
+  vistaCorrente=name;
   if(v.tab) lastTab=v.tab;
   NQ.$$('#tabs button').forEach(function(b){
     b.classList.toggle('active', b.dataset.v===lastTab);
@@ -3685,7 +4332,7 @@ NQ.exportZIP=function(){
 };
 
 function albumHTML(s, byDay){
-  var tot=s.exp.reduce(function(a,e){ return a+e.nok; },0);
+  var tot=NQ.totale(s.exp);
   var totKm=Object.keys(s.journal).reduce(function(a,k){
     return a+(parseFloat(s.journal[k].km)||0);
   },0);
@@ -3720,7 +4367,7 @@ function albumHTML(s, byDay){
       '<div class="stat"><b>'+Object.keys(s.trophies).length+'</b><s>trofei</s></div>'+
       '<div class="stat"><b>'+nFoto+'</b><s>foto</s></div>'+
       (totKm? '<div class="stat"><b>'+NQ.nok(totKm)+'</b><s>km</s></div>':'')+
-      (tot?   '<div class="stat"><b>'+NQ.nok(tot)+'</b><s>corone spese</s></div>':'')+
+      (tot?   '<div class="stat"><b>'+NQ.fmt(tot)+'</b><s>spesi</s></div>':'')+
     '</div></header><div class="w">';
 
   NQ.DAYS.forEach(function(day){
@@ -3744,18 +4391,18 @@ function albumHTML(s, byDay){
   /* i conti, così l'album è anche il rendiconto */
   if(s.exp.length){
     var byCat={};
-    s.exp.forEach(function(x){ byCat[x.cat]=(byCat[x.cat]||0)+x.nok; });
+    s.exp.forEach(function(x){ byCat[x.cat]=(byCat[x.cat]||0)+NQ.val(x); });
     h+='<article><h2>I conti</h2><table>';
     Object.keys(NQ.CATS).forEach(function(k){
       if(!byCat[k]) return;
-      h+='<tr><td>'+NQ.CATS[k].icon+' '+esc(NQ.CATS[k].name)+'</td><td>'+NQ.nok(byCat[k])+' kr</td></tr>';
+      h+='<tr><td>'+NQ.CATS[k].icon+' '+esc(NQ.CATS[k].name)+'</td><td>'+NQ.fmt(byCat[k])+'</td></tr>';
     });
-    h+='<tr><td><b>Totale</b></td><td><b>'+NQ.nok(tot)+' kr ≈ '+NQ.eur(tot,s.rate)+' €</b></td></tr></table>';
+    h+='<tr><td><b>Totale</b></td><td><b>'+NQ.fmt(tot)+'</b></td></tr></table>';
 
     if(s.people && s.people.length>1){
       h+='<table>';
       NQ.balances().forEach(function(b){
-        h+='<tr><td>'+esc(b.name)+' ha anticipato</td><td>'+NQ.nok(b.paid)+' kr</td></tr>';
+        h+='<tr><td>'+esc(b.name)+' ha anticipato</td><td>'+NQ.fmt(b.paid)+'</td></tr>';
       });
       h+='</table>';
     }
@@ -3908,10 +4555,31 @@ function boot(){
   /* il browser scarica la pagina in background: fermiamo l'animazione */
   document.addEventListener('visibilitychange', function(){
     if(document.hidden){ NQ.map.stop(); NQ.chip.stop(); }
-    else if($('#v-map').classList.contains('active')){
-      NQ.map.start();
-      if(!NQ.store.d.mute) NQ.chip.play(NQ.chip.trackName||'route');
+    else {
+      if($('#v-map').classList.contains('active')){
+        NQ.map.start();
+        if(!NQ.store.d.mute) NQ.chip.play(NQ.chip.trackName||'route');
+      }
+      /* tornando sull'app conviene ricontrollare: l'altro può aver
+         scritto qualcosa mentre eri altrove */
+      NQ.sync.ora(true);
     }
+  });
+
+  /* All'apertura si prova ad allinearsi, in silenzio: se non c'è rete
+     non deve succedere niente di visibile. */
+  if(NQ.sync.configurato()) setTimeout(function(){ NQ.sync.ora(true); }, 1200);
+
+  addEventListener('online',  function(){ NQ.sync.ora(true); });
+  addEventListener('offline', function(){ NQ.sync.aggiornaUI(); });
+
+  /* chiudere la finestra modale cliccando fuori o con Esc */
+  var modal=$('#modal');
+  if(modal) modal.addEventListener('click', function(e){
+    if(e.target===modal) NQ.chiudiModal();
+  });
+  document.addEventListener('keydown', function(e){
+    if(e.key==='Escape' && modal && modal.classList.contains('open')) NQ.chiudiModal();
   });
 }
 
